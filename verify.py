@@ -2,8 +2,12 @@
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
+import json
+import hashlib
 
 ROOT = Path(__file__).resolve().parent / '_site'
+manifest = json.loads((ROOT / 'version.json').read_text())
+assert set(manifest['pages']) == {'/', '/zh/', '/blog/', '/zh/blog/'}
 
 
 class Page(HTMLParser):
@@ -22,6 +26,9 @@ class Page(HTMLParser):
 
 for route in ('index.html', 'zh/index.html', 'blog/index.html', 'zh/blog/index.html'):
     html = (ROOT / route).read_text()
+    assert f'name="site-version" content="{manifest["version"]}"' in html
+    url = '/' + route.removesuffix('index.html')
+    assert hashlib.sha256(html.encode()).hexdigest() == manifest['pages'][url]
     assert '<main id="main">' in html, f'Wrong page content: {route}'
     Page().feed(html)
 assert not (ROOT / 'blog/placeholder').exists(), 'Unpublished article was generated'
