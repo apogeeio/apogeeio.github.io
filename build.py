@@ -38,7 +38,7 @@ def render(c, language, page):
             {key: escape(value) for key, value in c['article'].items()},
             title=escape(c['post_title']), prefix=prefix)
     main_content = body if page == 'post' else f'<article class="page {page}">{body}</article>'
-    article_styles = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css">' if page == 'post' else ''
+    article_styles = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css"><link rel="stylesheet" href="/assets/experiment-one.css"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
     current_home = ' aria-current="page"' if page == 'home' else ''
     current_blog = ' aria-current="page"' if page != 'home' else ''
     return url, f'''<!doctype html>

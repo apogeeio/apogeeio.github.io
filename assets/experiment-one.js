@@ -1,0 +1,41 @@
+(() => {
+  const root = document.getElementById('experiment-one');
+  if (!root) return;
+  const zh = document.documentElement.lang.startsWith('zh');
+  const t = zh ? {
+    setup:'实验设置', model:'模型', repeat:'独立重复', gameplay:'游戏回放', replay:'原作者发布的网络回放', weights:'策略网络的 17,253 个权重，以文本提供', ask:'这个神经网络训练来玩什么游戏？', rule:'不允许使用工具。', prompt:'查看完整提示', closePrompt:'收起提示', answer:'回答', game:'游戏', confidence:'置信度', correct:'正确', wrong:'错误', truth:'实际游戏', reasoning:'回答依据', english:'英文原文 · 摘自最终回答', more:'阅读完整回答', less:'收起完整回答', tokens:'输出 tokens（含推理）', round:'第', roundEnd:'次', score:'本游戏识别正确', fullPrompt:'完整提示（英文原文）', download:'下载提示', loading:'正在载入实验记录…', error:'实验记录暂时无法载入。请刷新重试。', pause:'暂停回放',play:'播放回放'
+  } : {
+    setup:'Setup',model:'Model',repeat:'Independent repeat',gameplay:'Gameplay',replay:'Original authors’ policy replay',weights:'the policy’s 17,253 weights as text',ask:'Which game was this neural network trained on?',rule:'No tools are allowed.',prompt:'Show the full prompt',closePrompt:'Hide the full prompt',answer:'Answer',game:'Game',confidence:'confident',correct:'Correct',wrong:'Incorrect',truth:'Trained on',reasoning:'Answer rationale',english:'Excerpts from the final answer',more:'Read the full answer',less:'Hide the full answer',tokens:'output tokens (including reasoning)',round:'Run ',roundEnd:'',score:'Correct on this game',fullPrompt:'Full prompt',download:'Download prompt',loading:'Loading experiment records…',error:'Could not load the experiment records. Please refresh to try again.',pause:'Pause replay',play:'Play replay'
+  };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>');
+  const full = s => s.split(/(```[\s\S]*?```)/g).map(part => part.startsWith('```') ? `<pre><code>${esc(part.replace(/^```[^\n]*\n?/, '').replace(/```$/, ''))}</code></pre>` : part.split(/\n\n+/).filter(Boolean).map(p => `<p>${inline(p).replace(/\n/g,'<br>')}</p>`).join('')).join('');
+  const mark = s => esc(s).replace(/(-?\d+\.\d+)/g,'<mark>$1</mark>');
+  let data,game='breakout',model='astra',repeat=0;
+  root.textContent=t.loading;
+  fetch('/assets/experiment-one/data.json').then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{data=d;render();}).catch(()=>{root.textContent=t.error;});
+  function render(focusKey) {
+    const g=data.games.find(g=>g.id===game), r=g.runs.find(r=>r.model===model && r.repeat===repeat);
+    const score=g.runs.filter(r=>r.model===model && r.correct).length;
+    const active=(yes)=>yes?'true':'false';
+    root.innerHTML=`<div class="e1-top"><div class="e1-tabs" role="tablist" aria-label="${zh?'游戏':'Games'}">${data.games.map(g=>`<button role="tab" id="tab-${g.id}" aria-controls="e1-panel" aria-selected="${active(g.id===game)}" tabindex="${g.id===game?0:-1}" data-game="${g.id}">${g.label}</button>`).join('')}</div><details class="e1-setup"><summary>ⓘ ${t.setup}</summary><div>${zh?'<b>相同结构，只改变权重。</b><ul><li>10 × 10 网格，5 个输入通道。</li><li>MLP：500 → 32 → 32 → 5，tanh；17,253 个参数。</li><li>动作：等待、上、下、左、右。</li><li>使用原作者发布的 PPO 网络；不提供候选游戏名称，不允许工具。</li><li>每模型、每游戏独立生成 3 次，共 24 次。</li><li>按游戏类别评分，Freeway 接受 Frogger 类道路穿越回答。</li></ul>':'<b>Identical architecture; different weights.</b><ul><li>10 × 10 grid, five input channels.</li><li>MLP: 500 → 32 → 32 → 5, tanh; 17,253 parameters.</li><li>Actions: no-op, up, down, left, right.</li><li>Released PPO networks; no game options and no tools.</li><li>Three independent generations per model and game; 24 attempts.</li><li>Game-category grading accepts Frogger for Freeway.</li></ul>'}</div></details></div>
+    <div class="e1-controls"><div class="e1-choice" role="group" aria-label="${t.model}"><span>${t.model}</span>${['astra','deepseek'].map(m=>`<button data-model="${m}" aria-pressed="${active(m===model)}">${m==='astra'?'Astra':'DeepSeek'}</button>`).join('')}</div><div class="e1-choice" role="group" aria-label="${t.repeat}"><span>${t.repeat}</span>${[0,1,2].map(n=>`<button data-repeat="${n}" aria-pressed="${active(n===repeat)}">${t.round}${n+1}${t.roundEnd}</button>`).join('')}</div><span class="e1-score">${t.score} <b>${score}/3</b></span></div>
+    <div class="e1-card" id="e1-panel" role="tabpanel" aria-labelledby="tab-${game}"><aside class="e1-media"><img src="/assets/experiment-one/${game}.gif" width="220" height="220" alt="${g.label} ${t.gameplay}"><strong>${t.gameplay}</strong><small>${t.replay}</small><button class="e1-pause">${t.pause}</button><canvas hidden width="220" height="220" aria-hidden="true"></canvas></aside><div class="e1-content">
+    <div class="e1-prompt"><div class="e1-weight"><strong><span aria-hidden="true">▤</span> ${t.weights}</strong><div>W1 row 0  ${esc(g.weights_preview)}</div></div><p class="e1-question">${t.ask}<br>${t.rule}</p><button class="e1-link e1-prompt-toggle" aria-expanded="false" aria-controls="e1-full-prompt">${t.prompt} ▸</button><span class="e1-send" aria-hidden="true">↑</span><div id="e1-full-prompt" hidden><a href="/assets/experiment-one/${game}-prompt.txt" download>${t.download} ↗</a><pre tabindex="0" aria-label="${t.fullPrompt}"></pre></div></div>
+    <div class="e1-answer ${r.correct?'':'e1-wrong'}" aria-live="polite"><b class="e1-answer-label">${t.answer}</b><strong>${t.game}: <mark>${esc(r.guess)}</mark></strong>${r.confidence!==null?`<span>${r.confidence}% ${t.confidence}</span>`:''}<b>${r.correct?'✓ '+t.correct:'✕ '+t.wrong}</b>${r.output_tokens?`<small>${r.output_tokens.toLocaleString()} ${t.tokens}</small>`:''}${r.correct?'':`<span>${t.truth}: <b>${g.label}</b></span>`}</div>
+    <div class="e1-rationale"><h4>${t.reasoning}</h4><small>${t.english}</small><div class="e1-scroll" tabindex="0"><ol>${r.excerpts.map(p=>`<li>${mark(p)}</li>`).join('')}</ol></div><button class="e1-link e1-answer-toggle" aria-expanded="false" aria-controls="e1-full-answer">${t.more} ▸</button><div id="e1-full-answer" lang="en" hidden>${full(r.answer)}</div></div>
+    </div></div>`;
+    root.querySelectorAll('[data-game]').forEach(b=>b.onclick=()=>{game=b.dataset.game;render(`[data-game="${game}"]`);});
+    root.querySelectorAll('[data-model]').forEach(b=>b.onclick=()=>{model=b.dataset.model;render(`[data-model="${model}"]`);});
+    root.querySelectorAll('[data-repeat]').forEach(b=>b.onclick=()=>{repeat=Number(b.dataset.repeat);render(`[data-repeat="${repeat}"]`);});
+    root.querySelector('.e1-tabs').onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const i=data.games.findIndex(g=>g.id===game);game=data.games[e.key==='Home'?0:e.key==='End'?3:(i+(e.key==='ArrowRight'?1:3))%4].id;render(`[data-game="${game}"]`);};
+    root.querySelector('.e1-answer-toggle').onclick=e=>{const el=root.querySelector('#e1-full-answer');el.hidden=!el.hidden;e.currentTarget.setAttribute('aria-expanded',String(!el.hidden));e.currentTarget.textContent=(el.hidden?t.more:t.less)+' ▸';};
+    root.querySelector('.e1-prompt-toggle').onclick=async e=>{const btn=e.currentTarget,el=root.querySelector('#e1-full-prompt');el.hidden=!el.hidden;btn.setAttribute('aria-expanded',String(!el.hidden));btn.textContent=(el.hidden?t.prompt:t.closePrompt)+' ▸';if(!el.hidden&&!el.querySelector('pre').textContent){try{const res=await fetch(`/assets/experiment-one/${game}-prompt.txt`);if(!res.ok)throw Error();el.querySelector('pre').textContent=await res.text();}catch{el.querySelector('pre').textContent=t.error;}}};
+    const pause=root.querySelector('.e1-pause'),img=root.querySelector('.e1-media img'),canvas=root.querySelector('canvas');
+    pause.onclick=()=>{const stopping=canvas.hidden;if(stopping){canvas.getContext('2d').drawImage(img,0,0,220,220);}canvas.hidden=!stopping;img.hidden=stopping;pause.textContent=stopping?t.play:t.pause;};
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)img.onload=()=>pause.click();
+    if(focusKey)root.querySelector(focusKey)?.focus();
+  }
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')root.querySelector('.e1-setup')?.removeAttribute('open');});
+  document.addEventListener('click',e=>{const setup=root.querySelector('.e1-setup');if(setup&&!setup.contains(e.target))setup.removeAttribute('open');});
+})();
