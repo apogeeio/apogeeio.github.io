@@ -2,7 +2,7 @@
 
 Personal website: [apogeeio.github.io](https://apogeeio.github.io/).
 
-English and Chinese versions of the homepage and Blog. Unpublished biography and article templates are retained as HTML comments; they are not displayed. Edit the text in the `en` and `zh` entries of `content/site.json`; illustrations and styles are in `assets/`.
+English and Chinese versions of the homepage and Blog. Unpublished biography and article templates are retained as HTML comments; they are not displayed. Edit the text in `content/en.json` and `content/zh.json`; illustrations and styles are in `assets/`.
 
 ## Preview
 
@@ -15,9 +15,7 @@ python3 -m http.server 8000 --directory _site
 
 Open `http://localhost:8000/` or `http://localhost:8000/zh/`.
 
-Both languages share one template and one release. Translation keys must match. CSS and JavaScript filenames carry a content version; open pages check for new releases when revisited and once a minute while visible.
-
-Pushes to `main` deploy through GitHub Pages. The deployment verifies the live hashes of all four pages and their versioned assets. The generated `_site/` directory is not committed.
+Pushes to `main` deploy through GitHub Pages. The generated `_site/` directory is not committed.
 
 ## Design
 

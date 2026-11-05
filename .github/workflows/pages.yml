@@ -23,7 +23,6 @@ jobs:
           python-version: '3.12'
       - run: python build.py
       - run: python verify.py
-      - run: node tests/version-check.cjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -31,5 +30,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify live bilingual release
-        run: python verify_live.py

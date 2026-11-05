@@ -1,0 +1,24 @@
+{
+  "lang": "en",
+  "home": "Home",
+  "name": "Apogee",
+  "subtitle": "[Role / affiliation]",
+  "description": "Apogee — the point in orbit farthest from Earth. Building things that reach further.",
+  "bio": [
+    "[A short introduction will go here: background, current work, and the questions I am exploring.]",
+    "[More about my interests, projects, and experience will be added here.]",
+    "[This space will introduce the ideas and things I am working on. More to come.]"
+  ],
+  "skip": "Skip to content",
+  "language": "Language",
+  "other_language": "中文",
+  "other_lang": "zh-CN",
+  "blog_intro": "[Thoughts, projects, and notes — coming soon.]",
+  "post_title": "[Post title]",
+  "post_meta": "[Date] · [Reading time]",
+  "post_teaser": "[A brief introduction to the post will appear here. Articles, experiments, and notes will be added soon.]",
+  "post_heading": "[Section heading]",
+  "post_body": "[The article text will go here.]",
+  "back": "← Back to Blog",
+  "rights": "All rights reserved."
+}
