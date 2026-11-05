@@ -1,7 +1,24 @@
 {
-  "lang": "zh-CN", "home": "主页", "name": "远地点 / Apogee", "subtitle": "[身份 / 所属机构]",
+  "lang": "zh-CN",
+  "home": "主页",
+  "name": "远地点 / Apogee",
+  "subtitle": "[身份 / 所属机构]",
   "description": "Apogee — 轨道上距离地球最远的点。创造事物，抵达更远。",
-  "bio": ["[这里将填写一段个人简介：背景、目前的工作，以及正在探索的问题。]", "[这里将补充兴趣方向、项目和过往经历。]", "[这里将介绍正在思考和构建的事物，更多内容待补充。]"],
-  "portrait": "个人照片占位图", "skip": "跳至正文", "language": "语言", "other_language": "English", "other_lang": "en",
-  "blog_intro": "[想法、项目与笔记，内容待补充。]", "post_title": "[文章标题]", "post_meta": "[日期] · [阅读时间]", "post_teaser": "[这里将填写文章摘要。后续会补充文章、实验与笔记。]", "post_heading": "[小节标题]", "post_body": "[这里将填写文章正文。]", "back": "← 返回 Blog", "rights": "保留所有权利。"
+  "bio": [
+    "[这里将填写一段个人简介：背景、目前的工作，以及正在探索的问题。]",
+    "[这里将补充兴趣方向、项目和过往经历。]",
+    "[这里将介绍正在思考和构建的事物，更多内容待补充。]"
+  ],
+  "skip": "跳至正文",
+  "language": "语言",
+  "other_language": "English",
+  "other_lang": "en",
+  "blog_intro": "[想法、项目与笔记，内容待补充。]",
+  "post_title": "[文章标题]",
+  "post_meta": "[日期] · [阅读时间]",
+  "post_teaser": "[这里将填写文章摘要。后续会补充文章、实验与笔记。]",
+  "post_heading": "[小节标题]",
+  "post_body": "[这里将填写文章正文。]",
+  "back": "← 返回 Blog",
+  "rights": "保留所有权利。"
 }

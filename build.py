@@ -12,28 +12,30 @@ GLOBE = '<svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width=
 
 def render(c, language, page):
     prefix = '/zh/' if language == 'zh' else '/'
-    suffix = {'home': '', 'blog': 'blog/', 'post': 'blog/placeholder/'}[page]
+    suffix = {'home': '', 'blog': 'blog/'}[page]
     url = prefix + suffix
     other = ('/' if language == 'zh' else '/zh/') + suffix
-    title = c['name'] if page == 'home' else f"{c['post_title'] if page == 'post' else 'Blog'} — Apogee"
+    title = c['name'] if page == 'home' else 'Blog — Apogee'
     if page == 'home':
         body = f'''<h1>{escape(c['name'])}</h1>
-        <div class="hero-subtitle">{escape(c['subtitle'])}</div>
-        <img class="about-photo" src="/assets/portrait.svg" width="300" height="276" alt="{escape(c['portrait'])}">
         <p>{escape(c['description'])}</p>
+        <!--
+        <div class="hero-subtitle">{escape(c['subtitle'])}</div>
         {''.join('<p>' + escape(p) + '</p>' for p in c['bio'])}
+        -->
         <div class="quick-links"><a href="https://github.com/apogeeio">GitHub</a><span class="divider" aria-hidden="true">|</span><a href="{prefix}blog/">Blog</a></div>'''
     elif page == 'blog':
-        body = f'''<h1>Blog</h1><p class="blog-intro">{escape(c['blog_intro'])}</p>
+        body = f'''<h1>Blog</h1>
+        <!--
+        <p class="blog-intro">{escape(c['blog_intro'])}</p>
         <ul class="blog-list"><li class="blog-card">
         <div class="blog-figure"><img src="/assets/blog-placeholder.svg" width="260" height="180" alt=""></div>
         <div class="blog-copy"><p class="blog-meta">{escape(c['post_meta'])}</p>
         <h2 class="blog-title"><a href="{prefix}blog/placeholder/">{escape(c['post_title'])}</a></h2>
-        <p class="blog-teaser">{escape(c['post_teaser'])}</p></div></li></ul>'''
-    else:
-        body = f'''<h1>{escape(c['post_title'])}</h1><p class="article-meta">{escape(c['post_meta'])}</p>
-        <p>{escape(c['post_teaser'])}</p><h2 class="section-heading">{escape(c['post_heading'])}</h2>
-        <p>{escape(c['post_body'])}</p><a href="{prefix}blog/">{escape(c['back'])}</a>'''
+        <p class="blog-teaser">{escape(c['post_teaser'])}</p></div></li></ul>
+        <h2 class="section-heading">{escape(c['post_heading'])}</h2>
+        <p>{escape(c['post_body'])}</p>
+        -->'''
     current_home = ' aria-current="page"' if page == 'home' else ''
     current_blog = ' aria-current="page"' if page == 'blog' else ''
     return url, f'''<!doctype html>
@@ -61,12 +63,14 @@ def render(c, language, page):
 
 
 def main():
+    if OUT.exists():
+        shutil.rmtree(OUT)
     OUT.mkdir(exist_ok=True)
     shutil.copytree(ROOT / 'assets', OUT / 'assets', dirs_exist_ok=True)
     urls = []
     for lang in ('en', 'zh'):
         content = json.loads((ROOT / 'content' / f'{lang}.json').read_text())
-        for page in ('home', 'blog', 'post'):
+        for page in ('home', 'blog'):
             url, html = render(content, lang, page)
             target = OUT / url.lstrip('/') / 'index.html'
             target.parent.mkdir(parents=True, exist_ok=True)

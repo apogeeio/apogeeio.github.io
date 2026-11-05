@@ -28,7 +28,6 @@ main { width: 100%; max-width: 925px; margin: 2em auto 0; padding: 0 1em; flex: 
 .page { font-size: .95rem; line-height: 1.65; }
 .home { padding-top: .5em; }
 .hero-subtitle { color: #6c7380; font-size: .98rem; font-weight: 600; margin: -.25rem 0 .9rem; }
-.about-photo { float: right; width: clamp(220px, 32vw, 300px); max-width: 300px; height: auto; margin: 6px 0 12px 22px; border-radius: 10px; box-shadow: 0 10px 24px #0000001f; }
 .quick-links { clear: both; margin: .4em 0 1em; font-size: .92rem; text-align: center; }
 .divider { color: #b0b7c3; margin: 0 .35em; }
 .blog-intro { margin: .4rem 0 1.4rem; }
@@ -57,5 +56,5 @@ main { width: 100%; max-width: 925px; margin: 2em auto 0; padding: 0 1em; flex: 
 @media (min-width: 48em) { html { font-size: 18px; } }
 @media (min-width: 57.8125em) { .page { width: 83.0508474576%; margin-left: auto; padding-left: 4.2372881356%; padding-right: 16.9491525424%; } }
 @media (min-width: 80em) { .masthead-inner, main { max-width: 1280px; } }
-@media (max-width: 700px) { .about-photo { float: none; display: block; margin: 8px auto 24px; } .blog-card { grid-template-columns: minmax(0, 1fr); } nav .brand { margin-right: 1rem; } nav a { margin: 0 .65rem; } }
+@media (max-width: 700px) { .blog-card { grid-template-columns: minmax(0, 1fr); } nav .brand { margin-right: 1rem; } nav a { margin: 0 .65rem; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
