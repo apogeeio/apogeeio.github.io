@@ -1,24 +1,23 @@
-<section class="tldr" aria-label="TLDR"><b>TLDR</b><p>我们用 Astra 和 DeepSeek 跑了3次 <a href="https://rikiyat.github.io/blog/weight-space-programming/">WSP</a> 中的实验一，并详细分析和拆解了其中的认知过程。结果表明，GPT-6 Astra（<code>gpt-6-astra</code>，high）能够稳定猜对游戏（100%），平均输出仅1,730 tokens；DeepSeek Flash（<code>deepseek-flash</code>，max）识别并不稳定（58.3%），平均输出68,342 tokens，约为 Astra 的39.5倍。我们随后详细拆解了从权重到游戏的识别过程，说明了为什么 Astra 能够很好地解决这个任务：人类在一定程度上也能够做到。</p></section>
-<p>我们沿用 <a href="https://rikiyat.github.io/blog/weight-space-programming/">WSP</a> 文章中实验一的原始配置，加入 DeepSeek 作为对照，并让两个模型各跑3次独立实验。四个游戏使用相同的网络结构、输入通道和动作空间；每次提供全部17,253个权重与原始提示，不允许使用工具。</p>
+<section class="tldr" aria-label="TLDR"><b>TLDR</b><p>我们用 Astra 和 DeepSeek 跑了 3 次 <a href="https://rikiyat.github.io/blog/weight-space-programming/">WSP</a> 中的实验一，并详细分析和拆解了其中的认知过程。结果表明，GPT-6 Astra（<code>gpt-6-astra</code>，high）能够稳定猜对游戏（100%），平均输出仅 1,730 tokens；DeepSeek Flash（<code>deepseek-flash</code>，max）识别并不稳定（58.3%），平均输出 68,342 tokens，约为 Astra 的 39.5 倍。我们随后详细拆解了从权重到游戏的识别过程，说明了为什么 Astra 能够很好地解决这个任务：人类在一定程度上也能够做到。</p></section>
+<p>我们沿用 <a href="https://rikiyat.github.io/blog/weight-space-programming/">WSP</a> 文章中实验一的原始配置，加入 DeepSeek 作为对照，并让两个模型各跑 3 次独立实验。四个游戏使用相同的网络结构、输入通道和动作空间；每次提供全部 17,253 个权重与原始提示，不允许使用工具。</p>
 <figure class="table-wrap"><table class="results e1-stats"><thead><tr><th>游戏</th><th>Astra</th><th>DeepSeek</th></tr></thead><tbody>$experiment_rows</tbody></table></figure>
-<p>Astra 在四个游戏中均三次全对，合计12/12；DeepSeek 答对7/12，两者在打砖块上均三次全对。每次回答的平均输出开销分别为1,730和68,342 tokens，相差约39.5倍。</p>
-<p>DeepSeek 的五次错例中，有三次认成了推箱子，一次认成了贪吃蛇，还有一次认成了 Asterix。其中 Pac-Man 的第一次回答还原出了对称迷宫，却以88%的置信度认成了 Asterix。这说明，即使模型提取出了游戏的结构，也可能猜错游戏。</p>
-<p>从最终回答看，DeepSeek 用了很长的篇幅逐个解释通道，再列举候选游戏，尝试用它们的规则解释这些权重。它会比较推箱子、贪吃蛇、吃豆人和过马路等假设，逐项讨论哪些线索支持或反对它们。但这些解释有时越走越远：它把 Freeway 的移动物体解释成箱子，把顶部奖励解释成箱子的目标位置，再用向上的动作偏好补上“往上推箱子”的故事，最终以94%的置信度选了推箱子。</p><p>Astra 则抓住了更有区分度的线索：Freeway 中移动物体的横向车道、每隔四列重复的权重模式，以及顶部的奖励带。这几条线索共同指向过马路游戏。DeepSeek 也在读权重，但它容易停留在“玩家、物体、目标、障碍”这种许多游戏都适用的解释上，再围绕候选游戏补全细节。篇幅更长，解释更完整，猜测却未必更准。</p>
+<p>Astra 在四个游戏中均三次全对，合计 12/12；DeepSeek 答对 7/12，两者在打砖块上均三次全对。每次回答的平均输出开销分别为 1,730 和 68,342 tokens，相差约 39.5 倍。</p>
+<p>DeepSeek 的五次错例中，有三次认成了推箱子，一次认成了贪吃蛇，还有一次认成了 Asterix。其中 Pac-Man 的第一次回答还原出了对称迷宫，却以 88% 的置信度认成了 Asterix。这说明，即使模型提取出了游戏的结构，也可能猜错游戏。</p>
+<p>从最终回答看，DeepSeek 用了很长的篇幅逐个解释通道，再列举候选游戏，尝试用它们的规则解释这些权重。它会比较推箱子、贪吃蛇、吃豆人和过马路等假设，逐项讨论哪些线索支持或反对它们。但这些解释有时越走越远：它把 Freeway 的移动物体解释成箱子，把顶部奖励解释成箱子的目标位置，再用向上的动作偏好补上“往上推箱子”的故事，最终以 94% 的置信度选了推箱子。</p><p>Astra 则抓住了更有区分度的线索：Freeway 中移动物体的横向车道、每隔四列重复的权重模式，以及顶部的奖励带。这几条线索共同指向过马路游戏。DeepSeek 也在读权重，但它容易停留在“玩家、物体、目标、障碍”这种许多游戏都适用的解释上，再围绕候选游戏补全细节。篇幅更长，解释更完整，猜测却未必更准。</p>
 <figure class="e1-figure"><div class="e1" id="experiment-one"></div></figure>
-<h2>这不是魔法</h2><p>只给权重，不调用工具，模型就能理解这个策略的意图，推断出它运作的环境？听起来简直太神奇了，它究竟是怎么做到的？事实上这并不是魔法：当前实验配置下，神经网络的权重本身就没有那么“黑盒”，即使不依赖大模型，人类也能从中解读出许多含义。</p>
-<p>让我们从实验一的详细做法开始讲起：给定一个作者用 PPO 训练的小神经网络的权重，判断这个策略网络用于哪个游戏。权重直接进入上下文，不允许调用工具，模型直接作答。</p><p>听起来是一个很难的设置。不过，作者实际的问题设计降低到了一个 toy question 的级别。我们先看 prompt。</p>
+<h2>这不是魔法</h2><p>只给权重，不调用工具，模型就能理解这个策略的意图，推断出它运作的环境？听起来简直太神奇了，它究竟是怎么做到的？事实上，这并不是魔法：当前实验配置下，神经网络的权重本身就没有那么“黑盒”，即使不依赖大模型，人类也能从中解读出许多含义。</p>
+<p>让我们从实验一的详细做法开始讲起：给定作者用 PPO 训练的小神经网络的权重，判断这个策略网络用于哪个游戏。权重直接进入上下文，不允许调用工具，模型直接作答。</p><p>听起来是一个很难的设置。不过，作者实际的问题设计降低到了一个 toy question 的级别。我们先看 prompt。</p>
 <figure><img src="/assets/experiment-one/prompt-overview.png" alt="提示由观察、动作、网络、问题、回答格式和权重六部分组成" loading="lazy"><figcaption>提示结构示意；图中百分比为原作者展示的置信度。</figcaption></figure>
-<p>如上图所示，prompt 用六个部分详细进行了说明：
-其中第一部分observation告诉模型：游戏本体是10*10的网格世界，5个通道会分别代表当前格子是否有  agent, moving, reward, obstacle, previous 占用。好比打砖块游戏的某一帧，agent 通道的输入就会是底部的小绿条，moving则用小绿点表示运动的砖块，reward表示上方的砖头，obstacle代表四周包围着的障碍物墙壁。最后previous  表面了前一帧的情况。</p>
-<p>相信聪明的读者已经发现了：得知了observation，再考虑到策略是一个简单的两层隐藏层全连接网络，我们立刻就能够对网络第一层的形态有一个初步的假设（如果网络本身比较简单的话）。例如，接收agent通道的对应W矩阵，它的激活权重一定会分布在底部，因为agent只会在底部移动，其余部分的信号不会随着游戏进行而改变。同理接收reward的矩阵，激活权重也一定会倾向于分布在矩阵上方。</p>
-<p>同理，给定action后，我们也能假设网络最后一层的权重有某种规律，例如对于左右两个动作，相关权重应该比较突出，因为打砖块游戏无法上下移动挡板。</p>
-<p>所以，这其实是一个toy级别的setting，经过基本的可视化，人类肉眼就能够看出并解释模型的权重，这和我们常规意义下的黑盒大模型权重是很不一样的。不可解释性来源于庞大的规模，对于小规模的网络我们能够解释很多，毕竟它本质上是一个复合函数。</p>
-<figure class="e1-figure"><img src="/assets/experiment-one/breakout-evidence.png" alt="回答引用的球拍、砖块、小球及上一帧权重位置" loading="lazy"><figcaption>黄色框标出 Astra 第一次回答引用的数值。红正蓝负，每张图独立色标；坐标和单元编号从0开始。</figcaption></figure>
-<details class="trace"><summary>展开五个通道的全部160张权重图</summary><div class="trace-body">
+<p>如上图所示，prompt 分六个部分进行了详细说明。其中，第一部分 observation 告诉模型：游戏本体是 10 × 10 的网格世界，5 个通道分别表示 agent、moving、reward、obstacle 和 previous 的占用信息。好比打砖块游戏的某一帧，agent 通道的输入就会是底部的小绿条，moving 则用小绿点表示运动的小球，reward 表示上方的砖头，obstacle 代表四周包围着的障碍物墙壁。最后，previous 表示前一帧的情况。</p>
+<p>相信聪明的读者已经发现了：得知了 observation，再考虑到策略是一个具有两个隐藏层的简单全连接网络，我们立刻就能够对网络第一层的形态有一个初步的假设（如果网络本身比较简单的话）。例如，接收 agent 通道输入的对应 W 矩阵，它的激活权重一定会分布在底部，因为 agent 只会在底部移动，其余部分的信号不会随着游戏进行而改变。同理，接收 reward 通道输入的矩阵，激活权重也一定会倾向于分布在矩阵上方。</p>
+<p>同理，给定 action 后，我们也能假设网络最后一层的权重有某种规律，例如，对于左右两个动作，相关权重应该比较突出，因为打砖块游戏无法上下移动挡板。</p>
+<p>所以，这其实是一个 toy 级别的 setting。经过基本的可视化，人类肉眼就能够看出并解释模型的权重，这和我们常规意义下的黑盒大模型权重是很不一样的。不可解释性来源于庞大的规模。对于小规模的网络，我们能够解释很多，毕竟它本质上是一个复合函数。</p>
+<figure class="e1-figure"><img src="/assets/experiment-one/breakout-evidence.png" alt="回答引用的球拍、砖块、小球及上一帧权重位置" loading="lazy"><figcaption>黄色框标出 Astra 第一次回答引用的数值。红正蓝负，每张图独立色标；坐标和单元编号从 0 开始。</figcaption></figure>
+<details class="trace"><summary>展开五个通道的全部 160 张权重图</summary><div class="trace-body">
 <figure><img src="/assets/experiment-one/channel-0-agent.png" alt="显然，挡板只会在下方移动" loading="lazy"><figcaption>显然，挡板只会在下方移动</figcaption></figure>
 <figure><img src="/assets/experiment-one/channel-1-moving-objects.png" alt="小球会在大部分区域运动，除了底部" loading="lazy"><figcaption>小球会在大部分区域运动，除了底部</figcaption></figure>
-<figure><img src="/assets/experiment-one/channel-2-reward-targets.png" alt="reward只在上方1/3 处" loading="lazy"><figcaption>reward只在上方1/3 处</figcaption></figure>
+<figure><img src="/assets/experiment-one/channel-2-reward-targets.png" alt="reward 只在上方 1/3 处" loading="lazy"><figcaption>reward 只在上方 1/3 处</figcaption></figure>
 <figure><img src="/assets/experiment-one/channel-3-obstacles.png" alt="障碍明显分布在四周" loading="lazy"><figcaption>障碍明显分布在四周</figcaption></figure>
 <figure><img src="/assets/experiment-one/channel-4-previous-frame.png" alt="previous 这一通道和 moving 通道很像，可能用来捕捉时序和动态" loading="lazy"><figcaption>previous 这一通道和 moving 通道很像，可能用来捕捉时序和动态</figcaption></figure>
 </div></details>
-<p>图中的每个方块表示一个输入位置到某个隐藏单元的连接权重。第一层可以拆成5个通道 × 32个隐藏单元，共160张10×10矩阵。上图挑出了回答实际引用的单元，完整图册放在展开区。</p><p>第一层权重保留了清楚的空间结构：球拍在底部一行，奖励目标在上方，小球可以在场内移动。输出层则突出左右动作。模型把这些线索组合成了“打砖块”。</p><p>从另一个角度来讲，这个问题信息其实是不全的：理论上策略是权重本身所包含的信息是不足以断定对应的游戏的，模型只能从最常见的小游戏先验中选择一个最可能的进行猜测。</p>
+<p>图中的每个方块表示一个输入位置到某个隐藏单元的连接权重。第一层可以拆成 5 个通道 × 32 个隐藏单元，共 160 张 10 × 10 矩阵。上图挑出了回答实际引用的单元，完整图册放在展开区。</p><p>第一层权重保留了清楚的空间结构：球拍在底部一行，奖励目标在上方，小球可以在场内移动。输出层则突出左右动作。模型把这些线索组合成了“打砖块”。</p><p>从另一个角度来讲，这个问题的信息其实是不全的：理论上，仅凭策略网络的权重，不足以唯一确定对应的游戏。模型只能从最常见的小游戏先验中选择一个最可能的游戏。</p>
