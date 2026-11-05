@@ -1,6 +1,12 @@
-<div class="exp-head" id="experiment-1"><span class="exp-num">实验 1</span><h3>只读权重，认出游戏</h3></div><p>我们沿用原始提示，让 Astra 和 DeepSeek 对四个游戏各独立回答三次，不允许使用工具。</p><figure class="table-wrap"><table class="results e1-stats"><thead><tr><th>游戏</th><th>Astra</th><th>DeepSeek</th></tr></thead><tbody>$experiment_rows</tbody></table><figcaption>三次独立回答 / 平均输出 tokens（含推理）。Freeway 接受 Frogger 类道路穿越回答。</figcaption></figure><p>Astra 12/12 全对，DeepSeek 答对7/12。两者在打砖块上均三次全对；差异出现在另外三个游戏。</p><h2>它究竟看到了什么？</h2>
-<p>抛开Qwen不谈，原文一共展示了8组实验。我们看看实验1: 给定一个作者自己PPO训的小神经网络的权重，要求判断这个网络策略用于哪个游戏上的。权重直接进上下文，不允许调用工具。模型直答，听起来就是一个很难的设置，正因如此，作者实际的问题设计降低到了一个toy question 的级别。GPT因此猜对了四个游戏。
-还是让我们来看一下PROMPT。</p>
+<section class="tldr" aria-label="TLDR"><b>TLDR</b><p>我们用 Astra 和 DeepSeek 跑了3次 <a href="https://rikiyat.github.io/blog/weight-space-programming/">WSP</a> 中的实验一，并详细分析和拆解了其中的认知过程。结果表明，GPT-6 Astra（<code>gpt-6-astra</code>，high）能够稳定猜对游戏（100%），平均输出仅1,730 tokens；DeepSeek Flash（<code>deepseek-flash</code>，max）识别并不稳定（58.3%），平均输出68,342 tokens，约为 Astra 的39.5倍。我们随后详细拆解了从权重到游戏的识别过程，说明了为什么 Astra 能够很好地解决这个任务：人类在一定程度上也能够做到。</p></section>
+<p>我们沿用 WSP 文章中实验一的原始配置，加入 DeepSeek 作为对照，并让两个模型各跑3次独立实验。四个游戏使用相同的网络结构、输入通道和动作空间；每次提供全部17,253个权重与原始提示，不允许使用工具。</p>
+<figure class="table-wrap"><table class="results e1-stats"><thead><tr><th>游戏</th><th>Astra</th><th>DeepSeek</th></tr></thead><tbody>$experiment_rows</tbody></table></figure>
+<p>Astra 在四个游戏中均三次全对，合计12/12；DeepSeek 答对7/12，两者在打砖块上均三次全对。每次回答的平均输出开销分别为1,730和68,342 tokens，相差约39.5倍。</p>
+<p>DeepSeek 的五次错例包括三次推箱子、一次贪吃蛇和一次 Asterix。其中 Pac-Man 的第一次回答还原出了对称迷宫，却以88%的置信度认成了 Asterix。提取出结构和正确识别用途，是两个步骤。</p>
+<p>DeepSeek 的820,103个输出 tokens 中，808,273个被接口记为推理 tokens，占98.6%；最终回答只占约1.4%。Astra 的推理 token 占比为44.7%。DeepSeek 的大量开销主要发生在输出最终答案之前，更多推理开销也没有对应更高的识别正确率。</p>
+<figure class="e1-figure"><div class="e1" id="experiment-one"></div></figure>
+<h2>它究竟看到了什么？</h2>
+<p>我们来详细地看看实验一是怎么做的：给定一个作者用 PPO 训练的小神经网络的权重，判断这个策略网络用于哪个游戏。权重直接进入上下文，不允许调用工具，模型直接作答。</p><p>听起来是一个很难的设置。不过，作者实际的问题设计降低到了一个 toy question 的级别。我们先看 prompt。</p>
 <figure><img src="/assets/experiment-one/prompt-overview.png" alt="提示由观察、动作、网络、问题、回答格式和权重六部分组成" loading="lazy"><figcaption>提示结构示意；图中百分比为原作者展示的置信度。</figcaption></figure>
 <p>如上图所示，prompt 用六个部分详细进行了说明：
 其中第一部分observation告诉模型：游戏本体是10*10的网格世界，5个通道会分别代表当前格子是否有  agent, moving, reward, obstacle, previous 占用。好比打砖块游戏的某一帧，agent 通道的输入就会是底部的小绿条，moving则用小绿点表示运动的砖块，reward表示上方的砖头，obstacle代表四周包围着的障碍物墙壁。最后previous  表面了前一帧的情况。</p>
@@ -15,4 +21,4 @@
 <figure><img src="/assets/experiment-one/channel-3-obstacles.png" alt="障碍明显分布在四周" loading="lazy"><figcaption>障碍明显分布在四周</figcaption></figure>
 <figure><img src="/assets/experiment-one/channel-4-previous-frame.png" alt="previous 这一通道和 moving 通道很像，可能用来捕捉时序和动态" loading="lazy"><figcaption>previous 这一通道和 moving 通道很像，可能用来捕捉时序和动态</figcaption></figure>
 </div></details>
-<p>图中的每个方块表示一个输入位置到某个隐藏单元的连接权重。第一层可以拆成5个通道 × 32个隐藏单元，共160张10×10矩阵。上图挑出了回答实际引用的单元，完整图册放在展开区。</p><p>第一层权重保留了清楚的空间结构：球拍在底部一行，奖励目标在上方，小球可以在场内移动。输出层则突出左右动作。模型把这些线索组合成了“打砖块”。</p><h2>看出了迷宫，也可能猜错游戏</h2><p>DeepSeek 的五次错例包括三次推箱子、一次贪吃蛇和一次 Asterix。其中 Pac-Man 的第一次回答还原出了对称迷宫，却以88%的置信度认成了 Asterix。提取出结构和正确识别用途，是两个步骤。</p><p>从另一个角度来讲，这个问题信息其实是不全的：理论上策略是权重本身所包含的信息是不足以断定对应的游戏的，模型只能从最常见的小游戏先验中选择一个最可能的进行猜测。</p><h2>逐次回答</h2><figure class="e1-figure"><div class="e1" id="experiment-one"></div></figure><p>如果把熟悉的游戏换成没有语义标签的随机函数，模型还能仅凭权重推断它的行为吗？下一篇我们用区间最值来检验这个问题。</p>
+<p>图中的每个方块表示一个输入位置到某个隐藏单元的连接权重。第一层可以拆成5个通道 × 32个隐藏单元，共160张10×10矩阵。上图挑出了回答实际引用的单元，完整图册放在展开区。</p><p>第一层权重保留了清楚的空间结构：球拍在底部一行，奖励目标在上方，小球可以在场内移动。输出层则突出左右动作。模型把这些线索组合成了“打砖块”。</p><p>从另一个角度来讲，这个问题信息其实是不全的：理论上策略是权重本身所包含的信息是不足以断定对应的游戏的，模型只能从最常见的小游戏先验中选择一个最可能的进行猜测。</p>

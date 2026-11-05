@@ -34,7 +34,7 @@ def experiment_rows(total_label):
 
 def render(c, language, page):
     prefix = '/zh/' if language == 'zh' else '/'
-    suffix = {'home': '', 'blog': 'blog/', 'post': 'blog/first-post/'}[page]
+    suffix = {'home': '', 'blog': 'blog/', 'post': 'blog/wsp-1/'}[page]
     url = prefix + suffix
     other = ('/' if language == 'zh' else '/zh/') + suffix
     title = c['name'] if page == 'home' else (c['post_title'] + ' — Apogee' if page == 'post' else 'Blog — Apogee')
@@ -49,15 +49,15 @@ def render(c, language, page):
     elif page == 'blog':
         body = f'''<h1>Blog</h1>
         <ul class="blog-list"><li class="blog-card">
-        <div class="blog-figure"><img src="/assets/experiment-one/channel-0-agent.png" width="260" height="180" alt=""></div>
+        <div class="blog-figure"><img src="/assets/experiment-one/prompt-overview.png" width="260" height="180" alt=""></div>
         <div class="blog-copy"><p class="blog-meta">{escape(c['post_meta'])}</p>
-        <h2 class="blog-title"><a href="{prefix}blog/first-post/">{escape(c['post_title'])}</a></h2>
+        <h2 class="blog-title"><a href="{prefix}blog/wsp-1/">{escape(c['post_title'])}</a></h2>
         <p class="blog-teaser">{escape(c['post_teaser'])}</p></div></li></ul>
         '''
     else:
         body = Template((ROOT / 'content/article.html').read_text()).substitute(
             {key: escape(value) for key, value in c['article'].items()},
-            title=escape(c['post_title']), prefix=prefix, experiment_rows=experiment_rows(c['article']['total_label']),
+            title=escape(c['post_title'].removeprefix('WSP-1: ')), prefix=prefix, experiment_rows=experiment_rows(c['article']['total_label']),
             article_body=Template((ROOT / f'content/breakout-{language}.html').read_text()).substitute(experiment_rows=experiment_rows(c['article']['total_label'])))
     main_content = body if page == 'post' else f'<article class="page {page}">{body}</article>'
     article_styles = f'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css"><link rel="stylesheet" href="/assets/experiment-one.css?v={hashlib.sha256((ROOT / "assets/experiment-one.css").read_bytes()).hexdigest()[:12]}"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
@@ -102,6 +102,11 @@ def main():
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(html, encoding='utf-8')
             urls.append(BASE + url)
+    for prefix in ('', 'zh/'):
+        legacy = OUT / prefix / 'blog/first-post/index.html'
+        legacy.parent.mkdir(parents=True, exist_ok=True)
+        target = '/' + prefix + 'blog/wsp-1/'
+        legacy.write_text(f'<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url={target}"><link rel="canonical" href="{BASE}{target}"><a href="{target}">WSP-1</a>')
     (OUT / '.nojekyll').touch()
     (OUT / 'robots.txt').write_text(f'User-agent: *\nAllow: /\nSitemap: {BASE}/sitemap.xml\n')
     (OUT / 'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + ''.join(f'<url><loc>{u}</loc></url>' for u in urls) + '</urlset>')

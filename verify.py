@@ -26,7 +26,7 @@ class Page(HTMLParser):
             assert '[' not in data and ']' not in data, 'Visible homepage placeholder text'
 
 
-for route in ('index.html', 'zh/index.html', 'blog/index.html', 'zh/blog/index.html', 'blog/first-post/index.html', 'zh/blog/first-post/index.html'):
+for route in ('index.html', 'zh/index.html', 'blog/index.html', 'zh/blog/index.html', 'blog/wsp-1/index.html', 'zh/blog/wsp-1/index.html'):
     html = (ROOT / route).read_text()
     assert '<main id="main">' in html, f'Wrong page content: {route}'
     Page(home=route in ('index.html', 'zh/index.html')).feed(html)
