@@ -29,7 +29,7 @@
     "affiliation": "[机构名称]",
     "published_label": "发布日期",
     "date": "2026年11月5日",
-    "summary": "四个游戏、两个模型、每项三次独立生成。Astra 正确识别 12/12，DeepSeek 正确识别 7/12。",
+    "summary": "Astra 12/12 全对；DeepSeek 答对 7/12，仅在 Breakout 上三次全对。",
     "summary_more": "[这里将概述关键观察及其意义。]",
     "panel_one": "[概览一]",
     "panel_two": "[概览二]",
@@ -44,8 +44,8 @@
     "point": "[要点待补充。]",
     "section_two": "[实验与结果]",
     "experiment": "实验 1",
-    "experiment_title": "只读权重，能认出网络训练来玩什么游戏吗？",
-    "method": "使用原作者发布的四个 PPO 策略网络，它们具有相同的输入通道、动作空间与网络结构。向模型提供全部 17,253 个权重的文本和结构说明，不给候选游戏名称，不允许调用工具。Astra 与 DeepSeek 分别独立回答三次。",
+    "experiment_title": "只读权重，认出游戏",
+    "method": "把四个游戏网络的 17,253 个权重写成文本，让模型猜它们在玩什么。不运行网络，不给候选名称；每个模型独立回答三次。",
     "setup_label": "实验设置",
     "setup": "[实验设置与参数。]",
     "figure_caption": "图 1：[图示说明。]",
@@ -54,7 +54,7 @@
     "metric_two": "[指标二]",
     "row_one": "[基线]",
     "row_two": "[方法]",
-    "table_caption": "每格按第 1 / 2 / 3 次独立生成排列。✓ 正确，✕ 错误。",
+    "table_caption": "三次独立回答，✓ 正确，✕ 错误。",
     "details_label": "展开详细内容",
     "details_body": "[补充细节与分析。]",
     "code": "[代码占位]",
@@ -79,7 +79,7 @@
     "game_label": "游戏",
     "total_label": "合计",
     "grading_note": "按游戏类别评分：Freeway 接受 Frogger 类道路穿越回答。置信度为模型自行报告；输出 token 数包含推理用量。",
-    "error_analysis": "DeepSeek 的五次错例包括三次 Sokoban、一次 Snake 和一次 Asterix。其中 Pac-Man 的第 1 次回答从权重中提取出了对称迷宫，却将它认作 Asterix，并给出 88% 的置信度。提取空间结构与正确识别游戏，是两个不同的步骤。",
+    "error_analysis": "DeepSeek 三次猜成推箱子，另两次猜成贪吃蛇和 Asterix。有趣的是，它曾从 Pac-Man 的权重中还原出对称迷宫，却仍以 88% 的置信度认成了 Asterix。",
     "results_link": "完整统计、实验口径与结果记录"
   }
 }

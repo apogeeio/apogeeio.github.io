@@ -29,7 +29,7 @@
     "affiliation": "[Affiliation]",
     "published_label": "Published",
     "date": "November 5, 2026",
-    "summary": "Four games, two models, three independent generations per condition. Astra identifies 12/12 correctly; DeepSeek identifies 7/12.",
+    "summary": "Astra gets 12/12 right. DeepSeek gets 7/12, with three correct answers only on Breakout.",
     "summary_more": "[The key observations and their significance will be summarized here.]",
     "panel_one": "[Overview 1]",
     "panel_two": "[Overview 2]",
@@ -44,8 +44,8 @@
     "point": "[Key point to be added.]",
     "section_two": "[Experiments and results]",
     "experiment": "Experiment 1",
-    "experiment_title": "Can a model identify a game just by reading the network’s weights?",
-    "method": "We use the four released PPO policies, all with identical input channels, action spaces and network dimensions. Each model receives the 17,253 weights as text and the architecture description, with no candidate game names and no tools. Astra and DeepSeek each make three independent attempts.",
+    "experiment_title": "Recognizing games from weights",
+    "method": "We give each model the 17,253 weights of four game-playing networks as text and ask it to name the game. No running the network, no candidate names; three independent attempts per model.",
     "setup_label": "Setup",
     "setup": "[Experimental setup and parameters.]",
     "figure_caption": "Figure 1: [Description of the figure.]",
@@ -54,7 +54,7 @@
     "metric_two": "[Metric 2]",
     "row_one": "[Baseline]",
     "row_two": "[Method]",
-    "table_caption": "Each cell lists independent runs 1 / 2 / 3. ✓ Correct; ✕ incorrect.",
+    "table_caption": "Three independent answers. ✓ Correct; ✕ incorrect.",
     "details_label": "Read details",
     "details_body": "[Supporting details and analysis.]",
     "code": "[Code placeholder]",
@@ -79,7 +79,7 @@
     "game_label": "Game",
     "total_label": "Total",
     "grading_note": "Scoring uses game categories: a Frogger-style road-crossing answer is accepted for Freeway. Confidence is self-reported; output token counts include reasoning tokens.",
-    "error_analysis": "DeepSeek’s five errors are three Sokoban guesses, one Snake guess and one Asterix guess. In the first Pac-Man attempt, it reconstructs a symmetric maze from the weights but names Asterix with 88% confidence. Recovering spatial structure and identifying the game are distinct steps.",
+    "error_analysis": "DeepSeek guesses Sokoban three times, Snake once and Asterix once. In one striking error, it reconstructs a symmetric maze from the Pac-Man weights, then calls it Asterix with 88% confidence.",
     "results_link": "Full statistics, methods and result records"
   }
 }
