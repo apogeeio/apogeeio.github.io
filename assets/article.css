@@ -1,0 +1,56 @@
+.article-page { font-family: 'Source Sans 3', 'Hiragino Sans', 'Noto Sans SC', 'Lato', Verdana, Helvetica, sans-serif; color: #333; -webkit-font-smoothing: antialiased; }
+.article-page .masthead, .article-page .site-footer { font-family: -apple-system, '.SFNSText-Regular', 'San Francisco', 'Roboto', 'Segoe UI', 'Helvetica Neue', 'Lucida Grande', Arial, sans-serif; -webkit-font-smoothing: auto; }
+.article-page main { max-width: none; padding: 0; margin: 0; }
+.article-column { width: calc(100% - 48px); max-width: 760px; margin-left: auto; margin-right: auto; }
+.post-title { padding: 48px 0 32px; background: #f3f9f5; }
+.post-title h1 { color: #222; font-size: 50px; line-height: 1.1; letter-spacing: -.01em; margin: 0 0 8px; font-weight: 700; }
+.post-title .title-kicker { display: block; margin: 0 0 6px; font-size: 26px; font-weight: 300; line-height: 1.4; letter-spacing: normal; color: #555; }
+.post-byline { padding: 24px 0; border-bottom: 1px solid #0000001a; font-size: 15px; line-height: 1.7; }
+.byline-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.post-byline h2 { margin: 0 0 2px; font-size: 14px; font-weight: 600; line-height: 1.7; letter-spacing: .06em; text-transform: uppercase; }
+.post-byline p { margin: 0; }
+.author-name, .post-body a, .post-appendix a { color: #118659; }
+.post-body { padding-top: 32px; font-size: 18px; line-height: 1.5; }
+.post-body p { margin: 0 0 24px; }
+.post-body h2 { margin: 32px 0 24px; font-size: 34px; font-weight: 300; line-height: 1.2; border-bottom: 2px solid #dbece2; padding-bottom: 9.6px; }
+.post-body h3 { font-size: 24px; font-weight: 300; }
+.post-body ul, .post-body ol { padding-left: 24px; margin: 0 0 24px; }
+.post-body li { margin-bottom: 8px; }
+.tldr { margin: 4px 0 26px; padding: 14px 20px 16px; border: 1px solid #dde9e2; border-radius: 10px; background: #f3f9f5; font-size: 17px; line-height: 1.6; }
+.tldr > b { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 700; letter-spacing: .06em; }
+.tldr p { margin: 0 0 12px; }
+.tldr p:last-child { margin: 0; }
+.post-body figure { margin: 24px 0 32px; }
+.post-body figcaption { margin: 10px auto 0; font-size: 16px; line-height: 1.45; text-align: center; }
+.teaser-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.teaser-panel { padding: 14px; border: 1px solid #dde9e2; border-radius: 10px; background: #f9fcfa; }
+.teaser-panel > b { color: #118659; font-size: 14px; text-transform: uppercase; }
+.teaser-panel p { margin: 12px 0 0; font-size: 15px; }
+.figure-placeholder { min-height: 130px; display: flex; align-items: center; justify-content: center; color: #65766c; background: #edf4ef; border: 1px dashed #b9d2c3; border-radius: 5px; margin-top: 12px; font-size: 16px; }
+.figure-placeholder.large { min-height: 280px; }
+.exp-head { margin: 44px 0 14px; }
+.exp-num { display: block; color: #118659; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+.exp-head h3 { margin: 2px 0 0; font-size: 20px; font-weight: 600; line-height: 1.3; }
+.fig-setup { margin-bottom: 12px; font-size: 15px; }
+.fig-setup summary { cursor: pointer; color: #118659; }
+.setup-body { padding: 12px 16px; border: 1px solid #dde9e2; border-radius: 6px; margin-top: 8px; }
+.setup-body p { margin: 0; }
+.results { width: 100%; border-collapse: collapse; font-size: 16px; }
+.results th, .results td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ddd; }
+.results thead th { background: #f3f9f5; font-weight: 600; }
+.results tbody th { font-weight: 400; }
+.trace { margin: 4px 0 24px; border: 1px solid #dde9e2; border-radius: 10px; background: #f9fcfa; }
+.trace summary { padding: 10px 16px; font-size: 16px; font-weight: 600; color: #2e996a; cursor: pointer; }
+.trace-body { padding: 0 16px 14px; font-size: 16px; }
+.trace-body p { margin-bottom: 12px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: 'JetBrains Mono', Menlo, Monaco, Consolas, monospace; font-size: 13px; line-height: 1.6; }
+.block-takeaway { margin: 16px 0 24px; padding: 12px 16px; border: 2px solid #2e996a; background: #dbece2; border-radius: 10px; }
+.block-takeaway p { margin: 8px 0 0; }
+.post-appendix { margin-top: 48px; padding: 32px 0; border-top: 1px solid #0000001a; background: #f7f7f7; font-size: 15px; line-height: 1.6; }
+.post-appendix h2 { font-size: 20px; font-weight: 400; margin: 24px 0 12px; }
+.post-appendix h2:first-child { margin-top: 0; }
+.post-appendix p { margin: 8px 0 6px; }
+.citation-box { padding: 10px 14px; border: 1px solid #0000001a; border-radius: 6px; background: #f7f8fa; color: #222; font-size: 12px; }
+.post-appendix .back-link { margin-top: 32px; }
+.article-page .site-footer { margin-top: 0; }
+@media (max-width: 767px) { .post-title { padding: 32px 0 24px; } .post-title h1 { font-size: 36px; } .post-title .title-kicker { font-size: 22px; } .post-body { font-size: 17px; } .post-body h2 { font-size: 28px; } .teaser-grid { grid-template-columns: 1fr; } .byline-grid { grid-template-columns: 1fr 1fr; gap: 16px; } }

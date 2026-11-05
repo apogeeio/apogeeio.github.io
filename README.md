@@ -2,7 +2,7 @@
 
 Personal website: [apogeeio.github.io](https://apogeeio.github.io/).
 
-English and Chinese versions of the homepage and Blog. Unpublished biography and article templates are retained as HTML comments; they are not displayed. Edit the text in `content/en.json` and `content/zh.json`; illustrations and styles are in `assets/`.
+English and Chinese versions of the homepage and Blog. The homepage biography is retained as an HTML comment. The first Blog article is a visible placeholder layout; its shared structure is in `content/article.html` and its styles are in `assets/article.css`. Edit the text in `content/en.json` and `content/zh.json`; illustrations and styles are in `assets/`.
 
 ## Preview
 

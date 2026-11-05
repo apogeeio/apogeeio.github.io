@@ -3,6 +3,7 @@ import json
 import shutil
 from html import escape
 from pathlib import Path
+from string import Template
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / '_site'
@@ -12,10 +13,10 @@ GLOBE = '<svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width=
 
 def render(c, language, page):
     prefix = '/zh/' if language == 'zh' else '/'
-    suffix = {'home': '', 'blog': 'blog/'}[page]
+    suffix = {'home': '', 'blog': 'blog/', 'post': 'blog/first-post/'}[page]
     url = prefix + suffix
     other = ('/' if language == 'zh' else '/zh/') + suffix
-    title = c['name'] if page == 'home' else 'Blog — Apogee'
+    title = c['name'] if page == 'home' else (c['post_title'] + ' — Apogee' if page == 'post' else 'Blog — Apogee')
     if page == 'home':
         body = f'''<h1>{escape(c['name'])}</h1>
         <p>{escape(c['description'])}</p>
@@ -26,18 +27,20 @@ def render(c, language, page):
         <div class="quick-links"><a href="https://github.com/apogeeio">GitHub</a><span class="divider" aria-hidden="true">|</span><a href="{prefix}blog/">Blog</a></div>'''
     elif page == 'blog':
         body = f'''<h1>Blog</h1>
-        <!--
-        <p class="blog-intro">{escape(c['blog_intro'])}</p>
         <ul class="blog-list"><li class="blog-card">
         <div class="blog-figure"><img src="/assets/blog-placeholder.svg" width="260" height="180" alt=""></div>
         <div class="blog-copy"><p class="blog-meta">{escape(c['post_meta'])}</p>
-        <h2 class="blog-title"><a href="{prefix}blog/placeholder/">{escape(c['post_title'])}</a></h2>
+        <h2 class="blog-title"><a href="{prefix}blog/first-post/">{escape(c['post_title'])}</a></h2>
         <p class="blog-teaser">{escape(c['post_teaser'])}</p></div></li></ul>
-        <h2 class="section-heading">{escape(c['post_heading'])}</h2>
-        <p>{escape(c['post_body'])}</p>
-        -->'''
+        '''
+    else:
+        body = Template((ROOT / 'content/article.html').read_text()).substitute(
+            {key: escape(value) for key, value in c['article'].items()},
+            title=escape(c['post_title']), prefix=prefix)
+    main_content = body if page == 'post' else f'<article class="page {page}">{body}</article>'
+    article_styles = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css">' if page == 'post' else ''
     current_home = ' aria-current="page"' if page == 'home' else ''
-    current_blog = ' aria-current="page"' if page == 'blog' else ''
+    current_blog = ' aria-current="page"' if page != 'home' else ''
     return url, f'''<!doctype html>
 <html lang="{c['lang']}">
 <head>
@@ -49,14 +52,15 @@ def render(c, language, page):
 <link rel="alternate" hreflang="x-default" href="{BASE}/{suffix}">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="stylesheet" href="/assets/style.css"><script src="/assets/site.js" defer></script>
+{article_styles}
 </head>
-<body>
+<body class="{'article-page' if page == 'post' else 'site-page'}">
 <a class="skip-link" href="#main">{escape(c['skip'])}</a>
 <header class="masthead"><div class="masthead-inner">
 <nav aria-label="{c['home']} / Blog"><a class="brand" href="{prefix}">Apogee</a><a href="{prefix}"{current_home}>{c['home']}</a><a href="{prefix}blog/"{current_blog}>Blog</a></nav>
 <details class="language"><summary aria-label="{c['language']}" title="{c['language']}">{GLOBE}</summary><div class="language-menu"><a href="{other}" lang="{c['other_lang']}" hreflang="{c['other_lang']}">{c['other_language']}</a></div></details>
 </div></header>
-<main id="main"><article class="page {page}">{body}</article></main>
+<main id="main">{main_content}</main>
 <footer class="site-footer"><div class="footer-inner"><div class="footer-follow"><a href="https://github.com/apogeeio">GITHUB</a></div><p class="copyright">© 2026 Apogee. {c['rights']}</p></div></footer>
 </body></html>
 '''
@@ -70,7 +74,7 @@ def main():
     urls = []
     for lang in ('en', 'zh'):
         content = json.loads((ROOT / 'content' / f'{lang}.json').read_text())
-        for page in ('home', 'blog'):
+        for page in ('home', 'blog', 'post'):
             url, html = render(content, lang, page)
             target = OUT / url.lstrip('/') / 'index.html'
             target.parent.mkdir(parents=True, exist_ok=True)
