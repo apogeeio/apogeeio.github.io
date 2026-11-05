@@ -4,11 +4,10 @@
 <div class="article-column post-body">
 <div class="exp-head" id="experiment-1"><span class="exp-num">$experiment</span><h3>$experiment_title</h3></div>
 <p>$method</p>
-<figure class="e1-figure"><div class="e1" id="experiment-one"></div><noscript><p>$no_js</p></noscript></figure>
-<figure class="table-wrap"><table class="results e1-stats"><thead><tr><th scope="col">$game_label</th><th scope="col">Astra</th><th scope="col">DeepSeek</th></tr></thead><tbody><tr><th scope="row">Breakout</th><td>✓ ✓ ✓</td><td>✓ ✓ ✓</td></tr><tr><th scope="row">Pong</th><td>✓ ✓ ✓</td><td>✕ ✕ ✓</td></tr><tr><th scope="row">Pac-Man</th><td>✓ ✓ ✓</td><td>✕ ✕ ✓</td></tr><tr><th scope="row">Freeway</th><td>✓ ✓ ✓</td><td>✓ ✓ ✕</td></tr><tr><th scope="row">$total_label</th><td><b>12/12 · 100%</b></td><td><b>7/12 · 58.3%</b></td></tr></tbody></table><figcaption>$table_caption</figcaption></figure>
+<figure class="table-wrap"><table class="results e1-stats"><thead><tr><th scope="col">$game_label</th><th scope="col">Astra</th><th scope="col">DeepSeek</th></tr></thead><tbody>$experiment_rows</tbody></table><figcaption>$table_caption</figcaption></figure>
 <p>$summary</p>
 <p>$error_analysis</p>
-<p class="back-link"><a href="${prefix}blog/">$back</a></p>
+<figure class="e1-figure"><div class="e1" id="experiment-one"></div><noscript><p>$no_js</p></noscript></figure>
 </div>
 </article>
 

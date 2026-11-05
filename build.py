@@ -11,6 +11,26 @@ BASE = 'https://apogeeio.github.io'
 GLOBE = '<svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.6 3.9 5.8 3.9 9.5s-1.3 6.9-3.9 9.5M12 2.5C9.4 5.1 8.1 8.3 8.1 12s1.3 6.9 3.9 9.5"/></svg>'
 
 
+
+def experiment_rows(total_label):
+    data = json.loads((ROOT / 'assets/experiment-one/data.json').read_text())
+    def cell(runs):
+        marks = ''.join('<svg class="e1-mark" role="img" aria-label="' + ('Correct' if r['correct'] else 'Incorrect') + '" viewBox="0 0 16 16"><path d="' + ('M3 8l3 3 7-8' if r['correct'] else 'M4 4l8 8M12 4l-8 8') + '"/></svg>' for r in runs)
+        mean = sum(r['output_tokens'] for r in runs) / len(runs)
+        return f'<td><span class="e1-result"><span class="e1-marks">{marks}</span><span class="e1-token">/ {mean:,.0f} tokens</span></span></td>'
+    rows = []
+    for game in data['games']:
+        rows.append('<tr><th scope="row">' + escape(game['label']) + '</th>' + ''.join(cell(sorted([r for r in game['runs'] if r['model'] == m], key=lambda r: r['repeat'])) for m in ('astra', 'deepseek')) + '</tr>')
+    totals = []
+    for model in ('astra', 'deepseek'):
+        runs = [r for g in data['games'] for r in g['runs'] if r['model'] == model]
+        correct = sum(r['correct'] for r in runs)
+        accuracy = f'{correct / len(runs):.1%}'.replace('.0%', '%')
+        mean = sum(r['output_tokens'] for r in runs) / len(runs)
+        totals.append(f'<td><span class="e1-total"><b>{correct}/{len(runs)} · {accuracy}</b><span class="e1-token">/ {mean:,.0f} tokens</span></span></td>')
+    return ''.join(rows) + '<tr><th scope="row">' + escape(total_label) + '</th>' + ''.join(totals) + '</tr>'
+
+
 def render(c, language, page):
     prefix = '/zh/' if language == 'zh' else '/'
     suffix = {'home': '', 'blog': 'blog/', 'post': 'blog/first-post/'}[page]
@@ -36,7 +56,7 @@ def render(c, language, page):
     else:
         body = Template((ROOT / 'content/article.html').read_text()).substitute(
             {key: escape(value) for key, value in c['article'].items()},
-            title=escape(c['post_title']), prefix=prefix)
+            title=escape(c['post_title']), prefix=prefix, experiment_rows=experiment_rows(c['article']['total_label']))
     main_content = body if page == 'post' else f'<article class="page {page}">{body}</article>'
     article_styles = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css"><link rel="stylesheet" href="/assets/experiment-one.css"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
     current_home = ' aria-current="page"' if page == 'home' else ''

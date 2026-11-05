@@ -54,7 +54,7 @@
     "metric_two": "[Metric 2]",
     "row_one": "[Baseline]",
     "row_two": "[Method]",
-    "table_caption": "Three independent answers. ✓ Correct; ✕ incorrect.",
+    "table_caption": "Three independent answers / mean output tokens (including reasoning).",
     "details_label": "Read details",
     "details_body": "[Supporting details and analysis.]",
     "code": "[Code placeholder]",

@@ -54,7 +54,7 @@
     "metric_two": "[指标二]",
     "row_one": "[基线]",
     "row_two": "[方法]",
-    "table_caption": "三次独立回答，✓ 正确，✕ 错误。",
+    "table_caption": "三次独立回答 / 平均输出 tokens（含推理）。",
     "details_label": "展开详细内容",
     "details_body": "[补充细节与分析。]",
     "code": "[代码占位]",
