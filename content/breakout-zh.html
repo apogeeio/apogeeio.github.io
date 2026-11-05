@@ -1,12 +1,12 @@
 <section class="tldr" aria-label="TLDR"><b>TLDR</b><p>我们用 Astra 和 DeepSeek 跑了3次 <a href="https://rikiyat.github.io/blog/weight-space-programming/">WSP</a> 中的实验一，并详细分析和拆解了其中的认知过程。结果表明，GPT-6 Astra（<code>gpt-6-astra</code>，high）能够稳定猜对游戏（100%），平均输出仅1,730 tokens；DeepSeek Flash（<code>deepseek-flash</code>，max）识别并不稳定（58.3%），平均输出68,342 tokens，约为 Astra 的39.5倍。我们随后详细拆解了从权重到游戏的识别过程，说明了为什么 Astra 能够很好地解决这个任务：人类在一定程度上也能够做到。</p></section>
-<p>我们沿用 WSP 文章中实验一的原始配置，加入 DeepSeek 作为对照，并让两个模型各跑3次独立实验。四个游戏使用相同的网络结构、输入通道和动作空间；每次提供全部17,253个权重与原始提示，不允许使用工具。</p>
+<p>我们沿用 <a href="https://rikiyat.github.io/blog/weight-space-programming/">WSP</a> 文章中实验一的原始配置，加入 DeepSeek 作为对照，并让两个模型各跑3次独立实验。四个游戏使用相同的网络结构、输入通道和动作空间；每次提供全部17,253个权重与原始提示，不允许使用工具。</p>
 <figure class="table-wrap"><table class="results e1-stats"><thead><tr><th>游戏</th><th>Astra</th><th>DeepSeek</th></tr></thead><tbody>$experiment_rows</tbody></table></figure>
 <p>Astra 在四个游戏中均三次全对，合计12/12；DeepSeek 答对7/12，两者在打砖块上均三次全对。每次回答的平均输出开销分别为1,730和68,342 tokens，相差约39.5倍。</p>
-<p>DeepSeek 的五次错例包括三次推箱子、一次贪吃蛇和一次 Asterix。其中 Pac-Man 的第一次回答还原出了对称迷宫，却以88%的置信度认成了 Asterix。提取出结构和正确识别用途，是两个步骤。</p>
-<p>DeepSeek 的820,103个输出 tokens 中，808,273个被接口记为推理 tokens，占98.6%；最终回答只占约1.4%。Astra 的推理 token 占比为44.7%。DeepSeek 的大量开销主要发生在输出最终答案之前，更多推理开销也没有对应更高的识别正确率。</p>
+<p>DeepSeek 的五次错例中，有三次认成了推箱子，一次认成了贪吃蛇，还有一次认成了 Asterix。其中 Pac-Man 的第一次回答还原出了对称迷宫，却以88%的置信度认成了 Asterix。这说明，即使模型提取出了游戏的结构，也可能猜错游戏。</p>
+<p>从最终回答看，DeepSeek 用了很长的篇幅逐个解释通道，再列举候选游戏，尝试用它们的规则解释这些权重。它会比较推箱子、贪吃蛇、吃豆人和过马路等假设，逐项讨论哪些线索支持或反对它们。但这些解释有时越走越远：它把 Freeway 的移动物体解释成箱子，把顶部奖励解释成箱子的目标位置，再用向上的动作偏好补上“往上推箱子”的故事，最终以94%的置信度选了推箱子。</p><p>Astra 则抓住了更有区分度的线索：Freeway 中移动物体的横向车道、每隔四列重复的权重模式，以及顶部的奖励带。这几条线索共同指向过马路游戏。DeepSeek 也在读权重，但它容易停留在“玩家、物体、目标、障碍”这种许多游戏都适用的解释上，再围绕候选游戏补全细节。篇幅更长，解释更完整，猜测却未必更准。</p>
 <figure class="e1-figure"><div class="e1" id="experiment-one"></div></figure>
-<h2>它究竟看到了什么？</h2>
-<p>我们来详细地看看实验一是怎么做的：给定一个作者用 PPO 训练的小神经网络的权重，判断这个策略网络用于哪个游戏。权重直接进入上下文，不允许调用工具，模型直接作答。</p><p>听起来是一个很难的设置。不过，作者实际的问题设计降低到了一个 toy question 的级别。我们先看 prompt。</p>
+<h2>这不是魔法</h2><p>只给权重，不调用工具，模型就能理解这个策略的意图，推断出它运作的环境？听起来简直太神奇了，它究竟是怎么做到的？事实上这并不是魔法：当前实验配置下，神经网络的权重本身就没有那么“黑盒”，即使不依赖大模型，人类也能从中解读出许多含义。</p>
+<p>让我们从实验一的详细做法开始讲起：给定一个作者用 PPO 训练的小神经网络的权重，判断这个策略网络用于哪个游戏。权重直接进入上下文，不允许调用工具，模型直接作答。</p><p>听起来是一个很难的设置。不过，作者实际的问题设计降低到了一个 toy question 的级别。我们先看 prompt。</p>
 <figure><img src="/assets/experiment-one/prompt-overview.png" alt="提示由观察、动作、网络、问题、回答格式和权重六部分组成" loading="lazy"><figcaption>提示结构示意；图中百分比为原作者展示的置信度。</figcaption></figure>
 <p>如上图所示，prompt 用六个部分详细进行了说明：
 其中第一部分observation告诉模型：游戏本体是10*10的网格世界，5个通道会分别代表当前格子是否有  agent, moving, reward, obstacle, previous 占用。好比打砖块游戏的某一帧，agent 通道的输入就会是底部的小绿条，moving则用小绿点表示运动的砖块，reward表示上方的砖头，obstacle代表四周包围着的障碍物墙壁。最后previous  表面了前一帧的情况。</p>
