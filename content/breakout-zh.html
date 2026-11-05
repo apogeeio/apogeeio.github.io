@@ -1,0 +1,18 @@
+<div class="exp-head" id="experiment-1"><span class="exp-num">实验 1</span><h3>只读权重，认出游戏</h3></div><p>我们沿用原始提示，让 Astra 和 DeepSeek 对四个游戏各独立回答三次，不允许使用工具。</p><figure class="table-wrap"><table class="results e1-stats"><thead><tr><th>游戏</th><th>Astra</th><th>DeepSeek</th></tr></thead><tbody>$experiment_rows</tbody></table><figcaption>三次独立回答 / 平均输出 tokens（含推理）。Freeway 接受 Frogger 类道路穿越回答。</figcaption></figure><p>Astra 12/12 全对，DeepSeek 答对7/12。两者在打砖块上均三次全对；差异出现在另外三个游戏。</p><h2>它究竟看到了什么？</h2>
+<p>抛开Qwen不谈，原文一共展示了8组实验。我们看看实验1: 给定一个作者自己PPO训的小神经网络的权重，要求判断这个网络策略用于哪个游戏上的。权重直接进上下文，不允许调用工具。模型直答，听起来就是一个很难的设置，正因如此，作者实际的问题设计降低到了一个toy question 的级别。GPT因此猜对了四个游戏。
+还是让我们来看一下PROMPT。</p>
+<figure><img src="/assets/experiment-one/prompt-overview.png" alt="提示由观察、动作、网络、问题、回答格式和权重六部分组成" loading="lazy"><figcaption>提示结构示意；图中百分比为原作者展示的置信度。</figcaption></figure>
+<p>如上图所示，prompt 用六个部分详细进行了说明：
+其中第一部分observation告诉模型：游戏本体是10*10的网格世界，5个通道会分别代表当前格子是否有  agent, moving, reward, obstacle, previous 占用。好比打砖块游戏的某一帧，agent 通道的输入就会是底部的小绿条，moving则用小绿点表示运动的砖块，reward表示上方的砖头，obstacle代表四周包围着的障碍物墙壁。最后previous  表面了前一帧的情况。</p>
+<p>相信聪明的读者已经发现了：得知了observation，再考虑到策略是一个简单的两层隐藏层全连接网络，我们立刻就能够对网络第一层的形态有一个初步的假设（如果网络本身比较简单的话）。例如，接收agent通道的对应W矩阵，它的激活权重一定会分布在底部，因为agent只会在底部移动，其余部分的信号不会随着游戏进行而改变。同理接收reward的矩阵，激活权重也一定会倾向于分布在矩阵上方。</p>
+<p>同理，给定action后，我们也能假设网络最后一层的权重有某种规律，例如对于左右两个动作，相关权重应该比较突出，因为打砖块游戏无法上下移动挡板。</p>
+<p>所以，这其实是一个toy级别的setting，经过基本的可视化，人类肉眼就能够看出并解释模型的权重，这和我们常规意义下的黑盒大模型权重是很不一样的。不可解释性来源于庞大的规模，对于小规模的网络我们能够解释很多，毕竟它本质上是一个复合函数。</p>
+<figure class="e1-figure"><img src="/assets/experiment-one/breakout-evidence.png" alt="回答引用的球拍、砖块、小球及上一帧权重位置" loading="lazy"><figcaption>黄色框标出 Astra 第一次回答引用的数值。红正蓝负，每张图独立色标；坐标和单元编号从0开始。</figcaption></figure>
+<details class="trace"><summary>展开五个通道的全部160张权重图</summary><div class="trace-body">
+<figure><img src="/assets/experiment-one/channel-0-agent.png" alt="显然，挡板只会在下方移动" loading="lazy"><figcaption>显然，挡板只会在下方移动</figcaption></figure>
+<figure><img src="/assets/experiment-one/channel-1-moving-objects.png" alt="小球会在大部分区域运动，除了底部" loading="lazy"><figcaption>小球会在大部分区域运动，除了底部</figcaption></figure>
+<figure><img src="/assets/experiment-one/channel-2-reward-targets.png" alt="reward只在上方1/3 处" loading="lazy"><figcaption>reward只在上方1/3 处</figcaption></figure>
+<figure><img src="/assets/experiment-one/channel-3-obstacles.png" alt="障碍明显分布在四周" loading="lazy"><figcaption>障碍明显分布在四周</figcaption></figure>
+<figure><img src="/assets/experiment-one/channel-4-previous-frame.png" alt="previous 这一通道和 moving 通道很像，可能用来捕捉时序和动态" loading="lazy"><figcaption>previous 这一通道和 moving 通道很像，可能用来捕捉时序和动态</figcaption></figure>
+</div></details>
+<p>图中的每个方块表示一个输入位置到某个隐藏单元的连接权重。第一层可以拆成5个通道 × 32个隐藏单元，共160张10×10矩阵。上图挑出了回答实际引用的单元，完整图册放在展开区。</p><p>第一层权重保留了清楚的空间结构：球拍在底部一行，奖励目标在上方，小球可以在场内移动。输出层则突出左右动作。模型把这些线索组合成了“打砖块”。</p><h2>看出了迷宫，也可能猜错游戏</h2><p>DeepSeek 的五次错例包括三次推箱子、一次贪吃蛇和一次 Asterix。其中 Pac-Man 的第一次回答还原出了对称迷宫，却以88%的置信度认成了 Asterix。提取出结构和正确识别用途，是两个步骤。</p><p>从另一个角度来讲，这个问题信息其实是不全的：理论上策略是权重本身所包含的信息是不足以断定对应的游戏的，模型只能从最常见的小游戏先验中选择一个最可能的进行猜测。</p><h2>逐次回答</h2><figure class="e1-figure"><div class="e1" id="experiment-one"></div></figure><p>如果把熟悉的游戏换成没有语义标签的随机函数，模型还能仅凭权重推断它的行为吗？下一篇我们用区间最值来检验这个问题。</p>

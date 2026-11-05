@@ -1,5 +1,6 @@
 """Generate the bilingual static site using the Python standard library."""
 import json
+import hashlib
 import shutil
 from html import escape
 from pathlib import Path
@@ -48,7 +49,7 @@ def render(c, language, page):
     elif page == 'blog':
         body = f'''<h1>Blog</h1>
         <ul class="blog-list"><li class="blog-card">
-        <div class="blog-figure"><img src="/assets/blog-placeholder.svg" width="260" height="180" alt=""></div>
+        <div class="blog-figure"><img src="/assets/experiment-one/channel-0-agent.png" width="260" height="180" alt=""></div>
         <div class="blog-copy"><p class="blog-meta">{escape(c['post_meta'])}</p>
         <h2 class="blog-title"><a href="{prefix}blog/first-post/">{escape(c['post_title'])}</a></h2>
         <p class="blog-teaser">{escape(c['post_teaser'])}</p></div></li></ul>
@@ -56,9 +57,10 @@ def render(c, language, page):
     else:
         body = Template((ROOT / 'content/article.html').read_text()).substitute(
             {key: escape(value) for key, value in c['article'].items()},
-            title=escape(c['post_title']), prefix=prefix, experiment_rows=experiment_rows(c['article']['total_label']))
+            title=escape(c['post_title']), prefix=prefix, experiment_rows=experiment_rows(c['article']['total_label']),
+            article_body=Template((ROOT / f'content/breakout-{language}.html').read_text()).substitute(experiment_rows=experiment_rows(c['article']['total_label'])))
     main_content = body if page == 'post' else f'<article class="page {page}">{body}</article>'
-    article_styles = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css"><link rel="stylesheet" href="/assets/experiment-one.css"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
+    article_styles = f'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css"><link rel="stylesheet" href="/assets/experiment-one.css?v={hashlib.sha256((ROOT / "assets/experiment-one.css").read_bytes()).hexdigest()[:12]}"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
     current_home = ' aria-current="page"' if page == 'home' else ''
     current_blog = ' aria-current="page"' if page != 'home' else ''
     return url, f'''<!doctype html>
