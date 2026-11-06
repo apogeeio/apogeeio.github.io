@@ -64,3 +64,6 @@ html:lang(zh) body { font-family: var(--chinese-font); font-weight: 400; }
 html:lang(zh) .page { font-size: 18px; line-height: 1.75; }
 html:lang(zh) h1, html:lang(zh) h2, html:lang(zh) h3 { font-weight: 500; line-height: 1.4; letter-spacing: normal; }
 html:lang(zh) .blog-teaser { line-height: 1.75; }
+
+.traffic { margin-top: 9px; font-size: 12px; line-height: 1.5; color: #6d747a; font-variant-numeric: tabular-nums; }
+.traffic > span + span::before { content: '·'; margin: 0 10px; color: #a1a7ac; }

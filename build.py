@@ -9,6 +9,7 @@ from string import Template
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / '_site'
 BASE = 'https://apogeeio.github.io'
+
 GLOBE = '<svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.6 3.9 5.8 3.9 9.5s-1.3 6.9-3.9 9.5M12 2.5C9.4 5.1 8.1 8.3 8.1 12s1.3 6.9 3.9 9.5"/></svg>'
 
 
@@ -57,10 +58,10 @@ def render(c, language, page):
     else:
         body = Template((ROOT / 'content/article.html').read_text()).substitute(
             {key: escape(value) for key, value in c['article'].items()},
-            title=escape(c['post_title'].removeprefix('WSP-1: ')), prefix=prefix, experiment_rows=experiment_rows(c['article']['total_label']),
+            title=escape(c['post_title'].removeprefix('WSP-1: ')), prefix=prefix, reading_label=('阅读' if language == 'zh' else 'Views'), experiment_rows=experiment_rows(c['article']['total_label']),
             article_body=Template((ROOT / f'content/breakout-{language}.html').read_text()).substitute(experiment_rows=experiment_rows(c['article']['total_label'])))
     main_content = body if page == 'post' else f'<article class="page {page}">{body}</article>'
-    article_styles = f'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css"><link rel="stylesheet" href="/assets/experiment-one.css?v={hashlib.sha256((ROOT / "assets/experiment-one.css").read_bytes()).hexdigest()[:12]}"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
+    article_styles = f'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css?v={hashlib.sha256((ROOT / "assets/article.css").read_bytes()).hexdigest()[:12]}"><link rel="stylesheet" href="/assets/experiment-one.css?v={hashlib.sha256((ROOT / "assets/experiment-one.css").read_bytes()).hexdigest()[:12]}"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
     current_home = ' aria-current="page"' if page == 'home' else ''
     current_blog = ' aria-current="page"' if page != 'home' else ''
     return url, f'''<!doctype html>
@@ -73,8 +74,9 @@ def render(c, language, page):
 <link rel="alternate" hreflang="zh-CN" href="{BASE}/zh/{suffix}">
 <link rel="alternate" hreflang="x-default" href="{BASE}/{suffix}">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<link rel="stylesheet" href="/assets/style.css"><script src="/assets/site.js" defer></script>
+<link rel="stylesheet" href="/assets/style.css?v={hashlib.sha256((ROOT / "assets/style.css").read_bytes()).hexdigest()[:12]}"><script src="/assets/site.js" defer></script>
 {article_styles}
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </head>
 <body class="{'article-page' if page == 'post' else 'site-page'}">
 <a class="skip-link" href="#main">{escape(c['skip'])}</a>
@@ -83,7 +85,7 @@ def render(c, language, page):
 <details class="language"><summary aria-label="{c['language']}" title="{c['language']}">{GLOBE}</summary><div class="language-menu"><a href="{other}" lang="{c['other_lang']}" hreflang="{c['other_lang']}">{c['other_language']}</a></div></details>
 </div></header>
 <main id="main">{main_content}</main>
-<footer class="site-footer"><div class="footer-inner"><div class="footer-follow"><a href="https://github.com/apogeeio">GITHUB</a></div><p class="copyright">© 2026 Apogee. {c['rights']}</p></div></footer>
+<footer class="site-footer"><div class="footer-inner"><div class="footer-follow"><a href="https://github.com/apogeeio">GITHUB</a></div><p class="copyright">© 2026 Apogee. {c['rights']}</p><div class="traffic"><span id="busuanzi_container_site_pv" style="display:none">{'总访问量' if language == 'zh' else 'Total visits'} <span id="busuanzi_value_site_pv"></span></span><span id="busuanzi_container_site_uv" style="display:none">{'访客数' if language == 'zh' else 'Visitors'} <span id="busuanzi_value_site_uv"></span></span></div></div></footer>
 </body></html>
 '''
 
