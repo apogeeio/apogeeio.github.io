@@ -33,12 +33,17 @@ def experiment_rows(total_label):
     return ''.join(rows) + '<tr><th scope="row">' + escape(total_label) + '</th>' + ''.join(totals) + '</tr>'
 
 
-def render(c, language, page):
+def render(c, language, page, post=None):
     prefix = '/zh/' if language == 'zh' else '/'
-    suffix = {'home': '', 'blog': 'blog/', 'post': 'blog/wsp-1/'}[page]
+    suffix = {'home': '', 'blog': 'blog/', 'post': f'blog/{post["slug"] if post else "wsp-1"}/'}[page]
     url = prefix + suffix
-    other = ('/' if language == 'zh' else '/zh/') + suffix
-    title = c['name'] if page == 'home' else (c['post_title'] + ' — Apogee' if page == 'post' else 'Blog — Apogee')
+    other = ('/' if language == 'zh' else '/zh/') + ('blog/' if post else suffix)
+    post_title = post['title'] if post else c['post_title']
+    title = c['name'] if page == 'home' else (post_title + ' — Apogee' if page == 'post' else 'Blog — Apogee')
+    description = post['teaser'] if post else c['description']
+    alternates = f'<link rel="alternate" hreflang="en" href="{BASE}/{suffix}">\n<link rel="alternate" hreflang="zh-CN" href="{BASE}/zh/{suffix}">\n<link rel="alternate" hreflang="x-default" href="{BASE}/{suffix}">'
+    if post:
+        alternates = f'<link rel="alternate" hreflang="zh-CN" href="{BASE}{url}">\n<link rel="alternate" hreflang="x-default" href="{BASE}{url}">'
     if page == 'home':
         body = f'''<h1>{escape(c['name'])}</h1>
         <p>{escape(c['description'])}</p>
@@ -48,18 +53,31 @@ def render(c, language, page):
         -->
         <div class="quick-links"><a href="https://github.com/apogeeio">GitHub</a><span class="divider" aria-hidden="true">|</span><a href="{prefix}blog/">Blog</a></div>'''
     elif page == 'blog':
+        extra_cards = ''.join(
+            f'<li class="blog-card"><div class="blog-figure"><img src="{escape(p["cover"], quote=True)}" width="260" height="180" alt=""></div>'
+            f'<div class="blog-copy"><p class="blog-meta">{escape(p["date"])}</p>'
+            f'<h2 class="blog-title"><a href="{prefix}blog/{escape(p["slug"])}/">{escape(p["title"])}</a></h2>'
+            f'<p class="blog-teaser">{escape(p["teaser"])}</p></div></li>'
+            for p in c.get('posts', [])
+        )
         body = f'''<h1>Blog</h1>
-        <ul class="blog-list"><li class="blog-card">
+        <ul class="blog-list">{extra_cards}<li class="blog-card">
         <div class="blog-figure"><img src="/assets/experiment-one/prompt-overview.png" width="260" height="180" alt=""></div>
         <div class="blog-copy"><p class="blog-meta">{escape(c['post_meta'])}</p>
         <h2 class="blog-title"><a href="{prefix}blog/wsp-1/">{escape(c['post_title'])}</a></h2>
         <p class="blog-teaser">{escape(c['post_teaser'])}</p></div></li></ul>
         '''
     else:
-        body = Template((ROOT / 'content/article.html').read_text()).substitute(
-            {key: escape(value) for key, value in c['article'].items()},
-            title=escape(c['post_title'].removeprefix('WSP-1: ')), prefix=prefix, reading_label=('阅读' if language == 'zh' else 'Views'), experiment_rows=experiment_rows(c['article']['total_label']),
-            article_body=Template((ROOT / f'content/breakout-{language}.html').read_text()).substitute(experiment_rows=experiment_rows(c['article']['total_label'])))
+        article = dict(c['article'])
+        if post:
+            article.update(kicker=post['kicker'], date=post['date'])
+            article_body = (ROOT / 'content' / post['body']).read_text()
+        else:
+            article_body = Template((ROOT / f'content/breakout-{language}.html').read_text()).substitute(experiment_rows=experiment_rows(c['article']['total_label']))
+        body = Template((ROOT / 'content/article.html').read_text().split('<!-- Article template', 1)[0]).substitute(
+            {key: escape(value) for key, value in article.items()},
+            title=escape(post['heading'] if post else c['post_title'].removeprefix('WSP-1: ')), prefix=prefix, reading_label=('阅读' if language == 'zh' else 'Views'), experiment_rows=experiment_rows(c['article']['total_label']),
+            article_body=article_body)
     main_content = body if page == 'post' else f'<article class="page {page}">{body}</article>'
     article_styles = f'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css?v={hashlib.sha256((ROOT / "assets/article.css").read_bytes()).hexdigest()[:12]}"><link rel="stylesheet" href="/assets/experiment-one.css?v={hashlib.sha256((ROOT / "assets/experiment-one.css").read_bytes()).hexdigest()[:12]}"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
     current_home = ' aria-current="page"' if page == 'home' else ''
@@ -68,11 +86,9 @@ def render(c, language, page):
 <html lang="{c['lang']}">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{escape(title)}</title><meta name="description" content="{escape(c['description'], quote=True)}">
+<title>{escape(title)}</title><meta name="description" content="{escape(description, quote=True)}">
 <link rel="canonical" href="{BASE}{url}">
-<link rel="alternate" hreflang="en" href="{BASE}/{suffix}">
-<link rel="alternate" hreflang="zh-CN" href="{BASE}/zh/{suffix}">
-<link rel="alternate" hreflang="x-default" href="{BASE}/{suffix}">
+{alternates}
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="stylesheet" href="/assets/style.css?v={hashlib.sha256((ROOT / "assets/style.css").read_bytes()).hexdigest()[:12]}"><script src="/assets/site.js" defer></script>
 {article_styles}
@@ -100,6 +116,12 @@ def main():
         content = json.loads((ROOT / 'content' / f'{lang}.json').read_text())
         for page in ('home', 'blog', 'post'):
             url, html = render(content, lang, page)
+            target = OUT / url.lstrip('/') / 'index.html'
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(html, encoding='utf-8')
+            urls.append(BASE + url)
+        for post in content.get('posts', []):
+            url, html = render(content, lang, 'post', post)
             target = OUT / url.lstrip('/') / 'index.html'
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(html, encoding='utf-8')

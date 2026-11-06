@@ -68,3 +68,11 @@ html:lang(zh) .post-appendix { line-height: 1.75; }
 
 .post-byline .reading { margin: 17px 0 0; color: #777e84; font-size: 13px; line-height: 1.5; font-variant-numeric: tabular-nums; }
 .reading svg { vertical-align: -3px; margin-right: 4px; }
+
+.pixelbench-body figure img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.pixelbench-body .table-wrap { max-width: 100%; overflow-x: auto; margin-bottom: 24px; }
+.pixelbench-body .results { min-width: 320px; }
+.pixelbench-body pre { max-width: 100%; padding: 16px; overflow-x: auto; border: 1px solid #dde9e2; border-radius: 6px; background: #f7f8fa; font-size: 14px; line-height: 1.6; }
+.pixelbench-body code { font-family: 'JetBrains Mono', monospace; overflow-wrap: anywhere; }
+.pixelbench-body pre code { white-space: pre-wrap; }
+.pixelbench-body { padding-bottom: 40px; overflow-wrap: anywhere; }

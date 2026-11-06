@@ -81,5 +81,17 @@
     "grading_note": "按游戏类别评分：Freeway 接受 Frogger 类道路穿越回答。置信度为模型自行报告；输出 token 数包含推理用量。",
     "error_analysis": "DeepSeek 三次猜成推箱子，另两次猜成贪吃蛇和 Asterix。有趣的是，它曾从 Pac-Man 的权重中还原出对称迷宫，却仍以 88% 的置信度认成了 Asterix。",
     "results_link": "完整统计、实验口径与结果记录"
-  }
+  },
+  "posts": [
+    {
+      "slug": "pixelbench",
+      "title": "PixelBench：大模型会拼豆么",
+      "kicker": "PixelBench",
+      "heading": "大模型会拼豆么",
+      "date": "2026年11月6日",
+      "teaser": "PixelBench 用“调色板 + 像素索引网格”评测语言模型生成和理解像素图的能力，并探索通过像素重建训练提升视觉理解。",
+      "cover": "/assets/pixelbench/figure-01.png",
+      "body": "pixelbench-zh.html"
+    }
+  ]
 }

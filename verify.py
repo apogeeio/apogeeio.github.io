@@ -26,9 +26,16 @@ class Page(HTMLParser):
             assert '[' not in data and ']' not in data, 'Visible homepage placeholder text'
 
 
-for route in ('index.html', 'zh/index.html', 'blog/index.html', 'zh/blog/index.html', 'blog/wsp-1/index.html', 'zh/blog/wsp-1/index.html'):
+routes = ('index.html', 'zh/index.html', 'blog/index.html', 'zh/blog/index.html', 'blog/wsp-1/index.html', 'zh/blog/wsp-1/index.html', 'zh/blog/pixelbench/index.html')
+for route in routes:
     html = (ROOT / route).read_text()
     assert '<main id="main">' in html, f'Wrong page content: {route}'
     Page(home=route in ('index.html', 'zh/index.html')).feed(html)
 assert not (ROOT / 'blog/placeholder').exists(), 'Unpublished article was generated'
-print('Verified six routes, local links, and hidden homepage placeholders.')
+pixelbench = (ROOT / 'zh/blog/pixelbench/index.html').read_text()
+assert pixelbench.count('<figure>') == 10, 'Missing PixelBench figures'
+assert pixelbench.count('<table') == 2, 'Missing PixelBench tables'
+assert pixelbench.count('<pre>') == 2, 'Missing PixelBench sample blocks'
+assert '/zh/blog/pixelbench/' in (ROOT / 'zh/blog/index.html').read_text(), 'Missing Blog entry'
+assert '/zh/blog/pixelbench/' in (ROOT / 'sitemap.xml').read_text(), 'Missing sitemap entry'
+print(f'Verified {len(routes)} routes, local links, PixelBench content, and hidden homepage placeholders.')
