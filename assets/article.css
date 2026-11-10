@@ -91,7 +91,7 @@ html:lang(zh) .post-appendix { line-height: 1.75; }
 .post-body .image-preview--wide { --preview-width: 760px; }
 .post-body .image-preview--tall { --preview-height: 480px; }
 .article-image:focus-visible { outline: 2px solid #118659; outline-offset: 6px; }
-html.image-viewer-open { overflow: hidden; scrollbar-gutter: stable; }
+html.image-viewer-open { overflow: hidden; }
 .image-viewer {
   position: fixed;
   inset: 0;
