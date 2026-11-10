@@ -37,13 +37,11 @@ def render(c, language, page, post=None):
     prefix = '/zh/' if language == 'zh' else '/'
     suffix = {'home': '', 'blog': 'blog/', 'post': f'blog/{post["slug"] if post else "wsp-1"}/'}[page]
     url = prefix + suffix
-    other = ('/' if language == 'zh' else '/zh/') + ('blog/' if post else suffix)
+    other = ('/' if language == 'zh' else '/zh/') + suffix
     post_title = post['title'] if post else c['post_title']
     title = c['name'] if page == 'home' else (post_title + ' — Apogee' if page == 'post' else 'Blog — Apogee')
     description = post['teaser'] if post else c['description']
     alternates = f'<link rel="alternate" hreflang="en" href="{BASE}/{suffix}">\n<link rel="alternate" hreflang="zh-CN" href="{BASE}/zh/{suffix}">\n<link rel="alternate" hreflang="x-default" href="{BASE}/{suffix}">'
-    if post:
-        alternates = f'<link rel="alternate" hreflang="zh-CN" href="{BASE}{url}">\n<link rel="alternate" hreflang="x-default" href="{BASE}{url}">'
     if page == 'home':
         body = f'''<h1>{escape(c['name'])}</h1>
         <p>{escape(c['description'])}</p>

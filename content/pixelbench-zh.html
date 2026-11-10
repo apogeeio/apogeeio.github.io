@@ -1,11 +1,11 @@
 <div class="pixelbench-body">
 <p>最近看到一篇有趣的工作，是11月2日刚发表的，来自港中文：<a href="https://haoquanzhang.github.io/pixelbench/?lang=zh#fnref:zh-understanding-setup">Can LLMs understand and generate images pixel by pixel?</a></p>
 <p>作者也有宣传文章
-<a href="https://www.xiaohongshu.com/user/profile/6325ef2a0000000023027921/6ae329970000000019003aa2?xsec_token=ABv2k9y77nb3m3E228gKejm4rd2cDWKhqiAjukRXV5mQI=&#x26;xsec_source=pc_user">PixelBench：大模型会拼豆么</a></p>
+<a href="https://www.xiaohongshu.com/user/profile/6325ef2a0000000023027921/6ae329970000000019003aa2">PixelBench：大模型会拼豆么</a></p>
 <p>下面简单讲一讲，感兴趣的可以读原作者博客和论文。</p>
-<section class="tldr" aria-label="TL;DR"><b>TL;DR</b><p>PixelBench 提出一个新的 benchmark，用“调色板 + 像素索引网格”评测现有语言模型通过文本来生成和理解像素图的能力。Astra 表现突出，其他模型表现则一般，且在分辨率提高后更容易退化。作者还提出将像素重建加入视觉指令微调的方法 PRT：在 Molmo2-4B 的 50 万条指令数据中额外加入 2,000 条重建样本后，视觉理解评测的平均成绩提高约 0.5—0.6 分。</p></section>
-<hr>
-<figure><img src="/assets/pixelbench/figure-01.png" alt="PixelBench 像素图生成与调色板网格示例" loading="lazy"></figure>
+<section aria-label="TL;DR" class="tldr"><b>TL;DR</b><p>PixelBench 提出一个新的benchmark，用“调色板 + 像素索引网格”评测现有语言模型通过文本来生成和理解像素图的能力。Astra 表现突出，其他模型表现则一般，且在分辨率提高后更容易退化。作者还提出将像素重建加入视觉指令微调的方法 PRT ：在 Molmo2-4B 的 50 万条指令数据中额外加入 2,000 条重建样本后，视觉理解评测的平均成绩提高约 0.5—0.6 分。</p></section>
+<hr/>
+<figure><img alt="PixelBench 配图 1" decoding="async" height="948" src="/assets/pixelbench/figure-01.png" width="1606"/></figure>
 <h2>1 如何表示和输出一张图片？</h2>
 <p>文章首先考虑的是：采用哪种方式，让 GPT-6 之类的语言模型生成图像？</p>
 <p>一个语言模型本身不能直接输出像素来生成图片，因为在不改变网络结构和词表的情况下，它只能产出文本 token。但我们可以通过额外或间接的方式来达成这个目的。例如，让模型输出 SVG、CAD 等领域专用语言来描述图片内容，再将其渲染为图像。更广义上，模型也可以通过 Python 代码库来生成它想表达的图片。当然，我们也可以从像素的视角出发，直接让模型输出每个像素的 RGB 值，从而逐像素地完成这件事。这些表示方式在表达能力和适用场景上各有差异。</p>
@@ -14,141 +14,141 @@
 <h2>2 像素 + 调色板</h2>
 <p>文章最终采用“受限的像素画”作为语言模型的输出形式。逐像素重复完整的 RGB 色值会产生大量重复文本，大大增加 token 开销。PixelBench 采用“调色板 + 二维索引网格”的表示方式。先输出一个包含 2—8 种不透明颜色的调色板，再输出一个 S × S 的索引网格。调色板使用 <code>#RRGGBB</code> 色值，网格里的每个字符用 <code>0</code>—<code>7</code> 指向一种颜色，两部分以 JSON 表达，再渲染成图片。</p>
 <p>注意：模型的输出是纯文本的，不包含工具调用和 Agent 框架。这是一次裸模型测试。</p>
-<figure><img src="/assets/pixelbench/figure-02.png" alt="调色板与像素索引网格表示" loading="lazy"></figure>
+<figure><img alt="PixelBench 配图 2" decoding="async" height="672" loading="lazy" src="/assets/pixelbench/figure-02.png" width="1650"/></figure>
 <h2>3 模型能画出什么？</h2>
 <p>因此，文章先设置了两种生成任务：Text-to-Pixel 和 Image-to-Pixel。</p>
 <h3>Text-to-Pixel（T2P）</h3>
 <p>给模型一个对象名称，比如兔子、蘑菇或者火车，让它画出对应的像素图。然后进行某种“重建”评测，来看文字中包含的概念和信息是否被传递到了图片当中，例如，画出来的是不是一只“兔子”。具体而言，作者整理了包含 100 个概念的列表，让 GPT-6 Astra、Claude Opus 5 等一系列模型以 zero-shot 方式生成图像，然后采用两条路线进行评测。第一条使用 SigLIP，将生成图像与 500 个候选概念的文本表示进行匹配，统计正确概念是否排在第一位。候选文本使用统一的像素图标描述模板。第二条让 Gemini 3.5 Flash 根据目标概念和渲染后的图像评分，六项分数合计 100 分。</p>
 <p>（为什么选择 Gemini 3.5 Flash？它只负责评分，没有参与生成评测吗？为什么采用打分，而不沿用 SigLIP 的思路，将分类任务交给 VLM 处理？是因为 500 个候选类别太多了吗？）</p>
 <p>评分明细和占比如下：</p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="table-wrap"><table class="results"><thead><tr><th>VLM 评分项</th><th align="right">满分</th></tr></thead><tbody><tr><td>主体身份是否正确、清楚</td><td align="right">20</td></tr><tr><td>关键部件和辨识性特征是否完整</td><td align="right">25</td></tr><tr><td>轮廓、结构和比例是否合理</td><td align="right">20</td></tr><tr><td>内部细节是否准确、有用</td><td align="right">20</td></tr><tr><td>像素簇与边缘组织是否清晰</td><td align="right">10</td></tr><tr><td>调色板与对比度是否支持辨认</td><td align="right">5</td></tr></tbody></table></div>
+<div class="table-wrap"><table class="results">
+<thead>
+<tr>
+<th>VLM 评分项</th>
+<th style="text-align:right">满分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>主体身份是否正确、清楚</td>
+<td style="text-align:right">20</td>
+</tr>
+<tr>
+<td>关键部件和辨识性特征是否完整</td>
+<td style="text-align:right">25</td>
+</tr>
+<tr>
+<td>轮廓、结构和比例是否合理</td>
+<td style="text-align:right">20</td>
+</tr>
+<tr>
+<td>内部细节是否准确、有用</td>
+<td style="text-align:right">20</td>
+</tr>
+<tr>
+<td>像素簇与边缘组织是否清晰</td>
+<td style="text-align:right">10</td>
+</tr>
+<tr>
+<td>调色板与对比度是否支持辨认</td>
+<td style="text-align:right">5</td>
+</tr>
+</tbody>
+</table></div>
 <p>实验结果非常直观：GPT 系列表现不错，尤其是 Astra 的 16 × 16 版本，充分保留了主要特征和主体内容，达到了像素游戏图标的水准。Opus 表现也挺好。其他模型就都非常一般了，对形状的把控格外抽象，相当扭曲，让人没眼看。（Gemini 和国产模型的表现太不堪了。为什么会有这种现象？如果让模型看了自己的渲染结果后再做修改，表现会好一些吗？）</p>
-<figure><img src="/assets/pixelbench/figure-03.png" alt="不同模型生成的青蛙像素画" loading="lazy"></figure>
-<figure><img src="/assets/pixelbench/figure-04.png" alt="不同模型生成的闪电及其他概念像素画" loading="lazy"></figure>
-<figure><img src="/assets/pixelbench/figure-05.png" alt="PixelBench 文本生成像素画的结果对比" loading="lazy"></figure>
+<figure><img alt="PixelBench 配图 3" decoding="async" height="1298" loading="lazy" src="/assets/pixelbench/figure-03.png" width="1802"/></figure>
+<figure><img alt="PixelBench 配图 4" decoding="async" height="1272" loading="lazy" src="/assets/pixelbench/figure-04.png" width="1800"/></figure>
+<figure><img alt="PixelBench 配图 5" decoding="async" height="884" loading="lazy" src="/assets/pixelbench/figure-05.png" width="1660"/></figure>
 <h3>Image-to-Pixel（I2P）</h3>
 <p>让模型进行某种低分辨率重建任务，然后考察重建损失。具体而言，实验给定一张原图，要求大模型输出重建后的像素图，保留主体、姿态、构图等信息；同时，采用几种传统方法完成同样的任务，作为比较基线。最后统计原图检索准确率、SigLIP 相似度和 DINO 相似度三项指标。</p>
 <p>文章从 ImageNet-1K 的 100 个类别中各选一张图像进行实验。可以看到，传统方法至少在降采样这件事情上表现得非常出色：它们会“平等”地压缩图像信息，符合我们的直觉。而模型则呈现出某种“语义”倾向：例如，天空和地面作为背景时，大多采用单一纯色，而非传统方法中展示的分层颜色（当然也可能是调色板颜色数量受限导致的？）；模型倾向于描绘狗狗的主要特征，例如，下图中的 GPT 在尝试描绘狗狗胸口和尾巴的白色斑块，以及清晰可辨的头、尾、腿等身体部件，呈现出“像素画”的特征。两类方法对有限像素的分配方式呈现出差异。这也符合预期：大模型更倾向抓住语义和理解方面的特征。</p>
 <p>模型排名也和 T2P 比较一致：GPT 系列普遍较强，尤其是 Astra；Opus 尚可，其他模型普遍很差。</p>
 <p>（还是类似的问题：如果让模型能够根据画面渲染结果重试，会怎么样？）</p>
-<figure><img src="/assets/pixelbench/figure-06.png" alt="图像重建任务的模型结果对比" loading="lazy"></figure>
+<figure><img alt="PixelBench 配图 6" decoding="async" height="1426" loading="lazy" src="/assets/pixelbench/figure-06.png" width="1782"/></figure>
 <p>总而言之，我认为两个测试本质上是在考虑信息：信息是怎么在文本和图像之间相互转换的？这个转换过程通常伴随信息损失，那么损失程度如何？怎么样衡量和定义？模型能很好地完成这个转换和压缩任务吗？</p>
 <h2>4 画板尺寸上的 scaling</h2>
 <p>一个自然的想法是，我们前面已经做了许多简化，限制了颜色数量和输出尺寸。假如我们给定更大的尺寸会怎么样？（更激进地说，假如允许使用全部 RGB 颜色，并将输出分辨率设为原图大小，又会如何？如此庞大的输出会超出上下文长度限制。）</p>
 <p>总之，文章在若干组设置上进行了相关实验。作者选取固定的 50 个概念和 50 张参考图像，让 Astra、Sol、Opus 和 Gemini 在 16、24、32、40、48、64、80、96、112、128 十种边长下分别生成结果。结果依然有趣：只有 Astra 经受住了考验，其余模型都出现了退化现象。（是由于长上下文吗？万级别的 tokens 不算太长吧？）</p>
 <p>可以观察到，GPT-5.6 Sol、Claude Opus 5 都出现了不同程度的退化，高分辨率并没有带来更多细节；Gemini 的退化现象更加严重，甚至无法表达太多有意义的内容。</p>
 <p>（Astra 此时的优势非常突出。这意味着什么？OpenAI 内部特地做了类似的训练，还是模型能力的自然涌现呢？）</p>
-<figure><img src="/assets/pixelbench/figure-07.png" alt="不同画板尺寸下的生成性能与重建示例" loading="lazy"></figure>
+<figure><img alt="PixelBench 配图 7" decoding="async" height="1598" loading="lazy" src="/assets/pixelbench/figure-07.png" width="1864"/></figure>
 <h2>5 画得出来，也读得懂吗？</h2>
 <p>给模型调色板和索引网格形式的输入，要求它从 10 个候选概念中选出图像所表达的概念。模型能够认出里面画的是什么吗？（此处是文本编码的表达，如果直接给渲染后的图片又会怎么样呢？模型的读/写能力还能维持相关性吗？）</p>
 <p>此处使用 Astra 和 PIA-reduced 生成的像素画作为输入，然后让语言模型完成这个分类任务。两种来源在三个分辨率下各提供 100 道题，共 600 道十选一问题。模型只接收调色板和网格文本。可以看到，实验结果还是符合预期的：在所测模型之间，理解成绩与 T2P、I2P 成绩的 Pearson 相关系数分别为 0.871 和 0.930，相关性较强。</p>
-<figure><img src="/assets/pixelbench/figure-08.png" alt="像素网格理解任务的准确率对比" loading="lazy"></figure>
+<figure><img alt="PixelBench 配图 8" decoding="async" height="930" loading="lazy" src="/assets/pixelbench/figure-08.png" width="1336"/></figure>
 <h2>6 用像素重建来训练视觉理解</h2>
 <p>文章提出了以像素重建作为辅助监督的后训练方法 Pixel Reconstruction Tuning（PRT）。具体而言，文章从 PixMo-Cap 中筛选出一个样本集，用 PIA-reduced 构建重建图像，并只保留 SigLIP2 相似度较高的结果。之后用 Gemini 3.8 Flash 生成图像描述与调色板解释。</p>
 <p>（此处为什么用了 Gemini 3.8 Flash？它为什么没有参与前面的评测？它生成的描述可靠吗？）</p>
-<p>最终，每条训练样本结构为：模型收到原图和 prompt，需要学习的输出为 <code>&#x3C;CAPTION></code>、<code>&#x3C;PALETTE></code> 和 <code>&#x3C;GRID></code> 三部分：先描述图像，再解释颜色，最后给出重建网格。具体格式如下：</p>
-<pre><code class="language-text">&#x3C;CAPTION>
-&#x3C;图像内容与构图的简短描述>
-&#x3C;/CAPTION>
+<p>最终，每条训练样本结构为：模型收到原图和 prompt，需要学习的输出为 <code>&lt;CAPTION&gt;</code>、<code>&lt;PALETTE&gt;</code> 和 <code>&lt;GRID&gt;</code> 三部分：先描述图像，再解释颜色，最后给出重建网格。具体格式如下：</p>
+<pre><code class="language-text">&lt;CAPTION&gt;
+&lt;图像内容与构图的简短描述&gt;
+&lt;/CAPTION&gt;
 
-&#x3C;PALETTE>
-&#x3C;颜色选择的总体说明>
+&lt;PALETTE&gt;
+&lt;颜色选择的总体说明&gt;
 
-a &#x3C;十六进制色值> (&#x3C;颜色名称>): &#x3C;覆盖的物体、区域及位置>
-b &#x3C;十六进制色值> (&#x3C;颜色名称>): &#x3C;覆盖的物体、区域及位置>
+a &lt;十六进制色值&gt; (&lt;颜色名称&gt;): &lt;覆盖的物体、区域及位置&gt;
+b &lt;十六进制色值&gt; (&lt;颜色名称&gt;): &lt;覆盖的物体、区域及位置&gt;
 ...
-h &#x3C;十六进制色值> (&#x3C;颜色名称>): &#x3C;覆盖的物体、区域及位置>
+h &lt;十六进制色值&gt; (&lt;颜色名称&gt;): &lt;覆盖的物体、区域及位置&gt;
 
-Layout: &#x3C;主要颜色区域的空间布局>
-&#x3C;/PALETTE>
+Layout: &lt;主要颜色区域的空间布局&gt;
+&lt;/PALETTE&gt;
 
-&#x3C;GRID>
-["&#x3C;a的色值>", "&#x3C;b的色值>", ..., "&#x3C;h的色值>"]
-&#x3C;逐行排列的颜色索引>
-&#x3C;/GRID>
+&lt;GRID&gt;
+["&lt;a的色值&gt;", "&lt;b的色值&gt;", ..., "&lt;h的色值&gt;"]
+&lt;逐行排列的颜色索引&gt;
+&lt;/GRID&gt;
 </code></pre>
 <p>本来想找几条具体的实验数据看一下，没有找到。或许我可以尝试找作者要一下？</p>
 <p>实验从 Molmo2-4B 的预训练 checkpoint 开始做后训练。对照组使用 50 万条 LLaVA-OneVision-1.5 指令数据，实验组额外加入 2,000 条 PRT 样本。两组均训练全部模块、遍历一次数据，结果如下：</p>
-<figure><img src="/assets/pixelbench/figure-09.png" alt="像素重建训练带来的视觉理解成绩变化" loading="lazy"></figure>
+<figure><img alt="PixelBench 配图 9" decoding="async" height="738" loading="lazy" src="/assets/pixelbench/figure-09.png" width="1794"/></figure>
 <p>（可以看到提升并不算非常显著。是测试集、模型还是训练方式的问题？在 Qwen 27B 上会如何呢？为什么要用 50 万条指令数据？直接只用 2,000 条数据训练不行吗？）</p>
 <p>paper 里还有在 Qwen 上做的实验。也是类似的实验设置：对照组在 Qwen3-VL-2B/4B/8B 上用 FineVision 数据集做后训练，实验组额外加上构造的 PRT 问答对作为监督。模型需要学习的输出如下：</p>
 <pre><code class="language-json">{
-  "palette": ["&#x3C;颜色0>", "&#x3C;颜色1>", "..."],
+  "palette": ["&lt;颜色0&gt;", "&lt;颜色1&gt;", "..."],
   "pixels": [
-    "&#x3C;第一行颜色索引>",
-    "&#x3C;第二行颜色索引>",
+    "&lt;第一行颜色索引&gt;",
+    "&lt;第二行颜色索引&gt;",
     "..."
   ]
 }
 </code></pre>
 <p>实验结果如下：可以看到确实传递了正向信号，或多或少都有提升，但各项设置下提升都不算非常显著，没有超过 5 个点的。是规模的问题吗？</p>
-<figure><img src="/assets/pixelbench/figure-10.png" alt="Qwen 模型及训练目标消融实验结果" loading="lazy"></figure>
+<figure><img alt="PixelBench 配图 10" decoding="async" height="436" loading="lazy" src="/assets/pixelbench/figure-10.png" width="1600"/></figure>
 <h2>7 还有哪些问题</h2>
 <p>训练数据量方面，原文表示尝试了从 1,000 条到 8,000 条样本的 scaling，但是没有带来显著的性能提升。这很奇怪：为什么增加数据没有带来显著的帮助？问题出在哪里？</p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="table-wrap"><table class="results"><thead><tr><th align="right">PRT 样本数</th><th align="right">按评测单元平均</th><th align="right">按 benchmark 平均</th></tr></thead><tbody><tr><td align="right">1,000</td><td align="right">+0.40</td><td align="right">+0.56</td></tr><tr><td align="right">2,000</td><td align="right">+0.61</td><td align="right">+0.45</td></tr><tr><td align="right">4,000</td><td align="right">+0.36</td><td align="right">+0.39</td></tr><tr><td align="right">8,000</td><td align="right">+0.50</td><td align="right">+0.51</td></tr></tbody></table></div>
+<div class="table-wrap"><table class="results">
+<thead>
+<tr>
+<th style="text-align:right">PRT 样本数</th>
+<th style="text-align:right">按评测单元平均</th>
+<th style="text-align:right">按 benchmark 平均</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1,000</td>
+<td style="text-align:right">+0.40</td>
+<td style="text-align:right">+0.56</td>
+</tr>
+<tr>
+<td style="text-align:right">2,000</td>
+<td style="text-align:right">+0.61</td>
+<td style="text-align:right">+0.45</td>
+</tr>
+<tr>
+<td style="text-align:right">4,000</td>
+<td style="text-align:right">+0.36</td>
+<td style="text-align:right">+0.39</td>
+</tr>
+<tr>
+<td style="text-align:right">8,000</td>
+<td style="text-align:right">+0.50</td>
+<td style="text-align:right">+0.51</td>
+</tr>
+</tbody>
+</table></div>
 <p>像素尺寸方面，文章采用的是“调色板 + 小尺寸像素网格”的表示方式。较高的输出分辨率会增加训练开销，较低的分辨率又会损失太多信息。能否找到一个合适的平衡点，或者使用更好的表示方式？</p>
 <p>视觉表示方面，我们有调色板、原始像素、SVG、bounding box / point 等表示方式，它们各有哪些优缺点？什么样的方式既能保留“逐像素 RGB 输出”的高保真度，又能保持序列简短？</p>
 <p>这让人想起压缩算法。从压缩的角度考虑，是有损还是无损的？如果是有损，哪些信息是我们关心且必须保留的？哪些信息又可以舍弃，以缩短序列？</p>
@@ -157,4 +157,21 @@ Layout: &#x3C;主要颜色区域的空间布局>
 <p>总体而言，我认为这是一项非常有趣的工作，我很喜欢这种“在尽可能干净的条件下进行评测，尝试研究模型的原子能力”的工作，它能够帮助我们更好地理解大模型的运作机制，从而触及某种本质。为什么会这样呢？图片在大模型的眼睛里到底是什么样子的？有太多的工作可以继续探索了。</p>
 <p>我之前简单做过一些类似的事情，大概是在纯色背景上放置若干小球，用足够清晰明了的 SVG 图像，要求大模型完成定位、计数、判断是否相交等任务。我也读过几篇类似的工作。这样做的好处就是足够干净，且能够大批量地合成数据。潜在问题之一是 OOD：模型训练时可能根本见不到这种样本，用户使用时也很少有这种干净的场景，我们能够相信模型的泛化能力吗？</p>
 <p>打算沿着这个方向做一些内容。</p>
+<p>扩展阅读：
+通过生成式语言表示图像：
+<a href="https://arxiv.org/abs/2401.01862">A Vision Check-up for Language Models</a></p>
+<p><a href="https://arxiv.org/abs/2408.08313">Can Large Language Models Understand Symbolic Graphics Programs?</a></p>
+<p><a href="https://arxiv.org/abs/2509.05208">Symbolic Graphics Programming with Large Language Models</a></p>
+<p><a href="https://arxiv.org/abs/2412.11102">Empowering LLMs to Understand and Generate Complex Vector Graphics</a></p>
+<p><a href="https://arxiv.org/abs/2409.17106">Text2CAD: Generating Sequential CAD Models from Beginner-to-Expert Level Text Prompts</a></p>
+<p><a href="https://arxiv.org/abs/2312.11556">StarVector: Generating Scalable Vector Graphics Code from Images and Text</a></p>
+<p>多模态图像的生成：
+<a href="https://arxiv.org/abs/2405.09818">Chameleon: Mixed-Modal Early-Fusion Foundation Models</a></p>
+<p><a href="https://www.nature.com/articles/s41586-025-10041-x">Multimodal learning with next-token prediction for large multimodal models</a></p>
+<p>图像重建对齐：
+<a href="https://arxiv.org/abs/2509.07295">Reconstruction Alignment Improves Unified Multimodal Models</a></p>
+<p>编码器：SigLIP和DINOv2
+<a href="https://arxiv.org/abs/2303.15343">Sigmoid Loss for Language Image Pre-Training</a></p>
+<p><a href="https://arxiv.org/abs/2304.07193">DINOv2: Learning Robust Visual Features without Supervision</a></p>
+
 </div>

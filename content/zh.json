@@ -84,6 +84,16 @@
   },
   "posts": [
     {
+      "slug": "blindtest",
+      "title": "BlindTest：视觉语言模型的基础感知盲点",
+      "kicker": "BlindTest",
+      "heading": "视觉语言模型的基础感知盲点",
+      "date": "2026年11月10日",
+      "teaser": "数交点、识别被圈字母、数重叠图形：重读 BlindTest，追问视觉编码器保留了什么，以及模型为何仍然答错。",
+      "cover": "/assets/blindtest/figure-01.png",
+      "body": "blindtest-zh.html"
+    },
+    {
       "slug": "pixelbench",
       "title": "PixelBench：大模型会拼豆么",
       "kicker": "PixelBench",

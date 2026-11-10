@@ -1,0 +1,128 @@
+<div class="blindtest-body">
+<p>Do the lines and circles intersect? Which letter is circled in red? How many circles and squares are in the image? <a href="https://vlmsareblind.github.io/">BlindTest Benchmark</a> turns these questions, which humans can answer with ease, into an evaluation set for VLMs. Even Sonnet-3.5 achieves an average score of only 77.84, still some distance from a human score of 100.</p>
+<p>Today I am sharing a paper first released in July 2024: <a href="https://vlmsareblind.github.io/">Vision language models are blind: Failing to translate detailed visual features into words</a>.</p>
+<figure><img alt="BlindTest figure 1" decoding="async" height="718" src="/assets/blindtest/figure-01.png" width="1586"/></figure>
+<section aria-label="TL;DR" class="tldr"><b>TL;DR</b><p>This paper introduces BlindTest, a benchmark of seven basic visual tasks. It finds that the leading VLMs of the time frequently fail at counting shapes, judging intersections, and identifying circled letters. The best-performing model, Claude 3.5 Sonnet, reaches an average accuracy of just 77.84%. Errors are particularly common when shapes overlap or sit close together; increasing the spacing substantially improves performance. On two geometric tasks, linear probes can extract correct answers from the visual features of the tested open-source models, showing that relevant information has been encoded but is not successfully translated into correct language answers.</p></section>
+<p>This blog contains two parts: 1. My notes and questions while reading the paper. 2. A follow-up: this work is now more than two years old, and current VLMs have moved far beyond the state of the art at the time. How do today's models perform? Do the paper's conclusions still hold? What have the authors worked on since? (This line of work appears to be driven mainly by <a href="https://taesiri.ai/">Mohammad Reza Taesiri</a> at the University of Alberta, including GlitchBench from December 2023 and VLMBIAS BENCHMARK from May 2025.)</p>
+<p>I think the most valuable aspect of this work is its exclusive use of synthetic data, which makes it possible to run controlled ablations across many dimensions and variables, including the colors and counts discussed below. This is difficult to do with natural-image datasets. Its potential weakness also lies in the synthetic dataset. Programmatically generated examples naturally have the characteristics of toy images and out-of-distribution data. Perhaps this is why the benchmark currently seems useful mainly as a probe, without really explaining the phenomenon or leading to targeted methods that improve model performance.</p>
+<h2>1 Introduction</h2>
+<p>The authors begin by noting that, although frontier models such as GPT-4V are advancing rapidly, existing VLM benchmarks still have many problems. For example, 42.9% of questions in MMMU can be answered without looking at an image (<a href="https://arxiv.org/abs/2403.20330">Are We on the Right Way for Evaluating Large Vision-Language Models?</a>). Answers may follow from textual reasoning or may already have been encoded in model weights during pretraining, making the image unnecessary. This makes testing visual ability itself, while excluding the effects of language, reasoning, and world knowledge, an important part of VLM evaluation. This is what the paper means by asking models to solve low-level vision tasks: testing the atomic abilities of perception.</p>
+<p>Inspired by human vision tests, the authors introduce BlindTest, a benchmark covering seven types of basic perception task. (Why not use existing human eye tests? First, there is a risk of test-set leakage. Second, the authors evaluated GPT-4o on human vision tests and found that these tests were already saturated for the leading VLMs of the time.)</p>
+<p>The authors expect VLMs to perform poorly on this benchmark. Their motivation is that these models process image inputs through late fusion (<a href="https://arxiv.org/abs/2304.08485">Visual Instruction Tuning</a>): image encoding takes place without involving the textual question. The encoder therefore does not focus on the question's particular requirements, instead operating on the average prior learned during pretraining. Meanwhile, the sizes, positions, and other properties of geometric elements in BlindTest are features particular to the visual modality that are difficult to describe in language. Images consisting purely of simple geometric shapes on a white background are also uncommon in vision-encoder training data, making them an OOD distribution. The information our questions care about may therefore be difficult for the vision encoder to capture. (This brings us back to image–text alignment. Can the two modalities be aligned without loss? How should that alignment be measured? This explanation also seems to attribute VLM failures to the encoder, whereas the paper later argues that the encoder already provides enough information. How should we understand that tension?)</p>
+<p>With this motivation, the paper constructs a seven-task visual check-up and evaluates the then-leading models: GPT-4o, Gemini-1.5 Pro, Claude-3 Sonnet, and Claude-3.5 Sonnet.</p>
+<p>The findings are:</p>
+<ol>
+<li>Even VLMs that perform well on contemporary chart benchmarks cannot reliably distinguish whether two lines or circles intersect, especially when the shapes are close together. (Are VLMs nearsighted?)</li>
+<li>VLMs recognize circles and words, but struggle to identify the letter circled within a word.</li>
+<li>VLMs are good at counting separate circles, but perform poorly on intersecting or overlapping shapes, including circles and polygons.</li>
+<li>VLMs struggle to count rows and columns in a grid. This sits uneasily with their strong performance on DocVQA, where accuracy exceeds 90%.</li>
+<li>VLMs struggle to count paths between two points in images resembling subway maps.</li>
+<li>GPT-4o outperforms Gemini-1.5 Pro on seven other VLM benchmarks, but performs worse on BlindTest. Even the leading large models score below 80% accuracy.</li>
+<li>Chain-of-thought models show no significant improvement over ordinary models. Test-time scaling therefore appears to offer little benefit on BlindTest. (Does this still hold? For example, how would GPT-6-Luna score with low versus high reasoning effort? Has the benchmark already saturated?)</li>
+<li>VLMs perform substantially better on simplified versions of BlindTest.</li>
+<li>Linear probes suggest that the vision encoder already contains all the information required to solve the tasks, locating the problem in the subsequent language-output stage. (Do the method and conclusion still apply to today's leading models?)</li>
+</ol>
+<h2>2 Experiments</h2>
+<p>Here is the overall results table.</p>
+<figure><img alt="BlindTest figure 2" decoding="async" height="518" loading="lazy" src="/assets/blindtest/figure-02.png" width="1426"/></figure>
+<p>Sonnet-3.5 is actually doing fairly well, although it still cannot achieve 100% accuracy on these easy cases.</p>
+<p>The paper evaluates the following models:</p>
+<p>Four closed-source state-of-the-art models: GPT-4o, Gemini-1.5 Pro, Claude-3 Sonnet, and Claude-3.5. They perform best on seven other VLM benchmarks: MMMU, AI2D, Math-Vista, ChartQA, DocVQA, ActivityNet-QA, and EgoSchema. The authors stopped testing Claude 3 Opus partway through.</p>
+<p>Eight open-source models of different sizes from three families: LLaVA OneVision-qwen2, Phi-3.5-vision-instruct, and InternVL-2.</p>
+<p>Two slow-thinking models, Gemini 2.0 Flash-Thinking and QVQ-Preview, are included for completeness. Their performance shows no significant improvement over non-thinking models.</p>
+<p>There are seven tasks. Below are their descriptions and results.</p>
+<h3>Task 1: Counting intersections between line plots</h3>
+<p>Each of two line plots consists of two connected segments. The plots can intersect at 0, 1, or 2 points, and the VLM must report the number of intersections.</p>
+<p>There are 1,800 images and 3,600 question–answer pairs. Images are square, with side lengths of 384, 768, or 1,152 pixels. For each plot, the three x-coordinates are fixed at the left edge, center, and right edge, while y-coordinates are randomly sampled from a predefined 12 × 12 grid. Line width is also randomly sampled as a variable.</p>
+<figure><img alt="BlindTest figure 3" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-03.png" width="2908"/></figure>
+<figure><img alt="BlindTest figure 4" decoding="async" height="700" loading="lazy" src="/assets/blindtest/figure-04.png" width="1460"/></figure>
+<p>The table on the left varies line width. Thicker lines actually cause a small, general decline in accuracy, which is rather counterintuitive. The heatmap on the right varies whether the two plots are close together or far apart. Apart from GPT being generally poor and Sonnet 3.5 generally good, the other models tend to do better when the plots are farther apart. This makes sense: two nearby lines are harder to distinguish and judge for intersections, while widely separated lines are easier. In the group with the largest separation, three of the four models reach 100% accuracy.</p>
+<p>The models' generally poor performance also contrasts with their strong ChartQA results. Perhaps ChartQA is less about vision than it appears, and tests reasoning and other abilities more heavily.</p>
+<p>Next are the ablations on image size and intersection count. On the left, the models' accuracy barely changes across image sizes, suggesting little sensitivity to resolution. On the right, however, the true number of intersections clearly affects accuracy. Could this reflect answer preferences? For example, Sonnet seems inclined to assume that the plots always intersect, while GPT tends to answer either 0 or 2.</p>
+<figure><img alt="BlindTest figure 5" decoding="async" height="616" loading="lazy" src="/assets/blindtest/figure-05.png" width="1320"/></figure>
+<h3>Task 2: Do the two circles intersect or overlap?</h3>
+<p>Given two solid circles of equal size, the VLM must judge whether they overlap or touch.</p>
+<p>There are 672 images and 1,344 question–answer pairs, generated with different radii, center distances, and relative positions. (The count in the body of arXiv v6 is incorrect here; I use the actual count in the released HF dataset.)</p>
+<figure><img alt="BlindTest figure 6" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-06.png" width="2908"/></figure>
+<figure><img alt="BlindTest figure 7" decoding="async" height="524" loading="lazy" src="/assets/blindtest/figure-07.png" width="1478"/></figure>
+<p>The table on the left varies the question or prompt. There is no obvious pattern: asking about “overlapping” or “touching” produces no consistent increase or decrease in accuracy. The heatmap on the right varies circle distance, revealing V-shaped curves that first decline and then recover. Sonnet 3.5's low point is clearly shifted to the left. This may relate to its tendency to answer “not overlapping/not intersecting,” which also gives it high accuracy when the circles are far apart. GPT performs particularly poorly at the bottom of the curve, suggesting weakness in distinguishing fine details.</p>
+<p>(The authors introduce a late-fusion explanation here and suggest that the encoder could be responsible. Yet this seems at odds with the later linear-probe section, which leans toward the conclusion that enough information is already available.)</p>
+<p>Next are image-size and orientation ablations. Each model has its own highs and lows, without an obvious common pattern. (I have seen similar cliffs and fluctuations with image size and orientation in my own experiments. This seems to be a complicated issue, possibly related to each model's architecture, rather than a clear shared preference.)</p>
+<figure><img alt="BlindTest figure 8" decoding="async" height="554" loading="lazy" src="/assets/blindtest/figure-08.png" width="918"/></figure>
+<p>The paper also compares colors, again without an obvious pattern. (Dark gray plus light gray performs better than magenta plus blue. We would normally expect a high-contrast red-and-blue combination to be easier to distinguish. This reminds me of experiments in which I varied target versus background colors to test the effect of contrast on accuracy. Combinations that looked less distinct to human eyes, such as white plus pale beige, sometimes scored higher than black plus white. That was quite unexpected.)</p>
+<figure><img alt="BlindTest figure 9" decoding="async" height="304" loading="lazy" src="/assets/blindtest/figure-09.png" width="694"/></figure>
+<h3>Task 3: Identifying the circled letter in a word</h3>
+<p>The VLM must identify the letter enclosed by a red circle in an English word.</p>
+<p>There are 52 × 3 × 2 = 312 images and 624 question–answer pairs. The paper uses three English words, three red-circle widths, and two fonts, circling each of the 15, 17, and 20 letters in the three words in turn. (Again, the sample count in the main text is incorrect.)</p>
+<figure><img alt="BlindTest figure 10" decoding="async" height="1008" loading="lazy" src="/assets/blindtest/figure-10.png" width="2908"/></figure>
+<p>For familiar words, models are better at identifying the right letter. On Acknowledgement, all models except GPT perform better.</p>
+<figure><img alt="BlindTest figure 11" decoding="async" height="430" loading="lazy" src="/assets/blindtest/figure-11.png" width="1368"/></figure>
+<p>Models also do noticeably better on shorter words without repeated letters. Could this be because those words occur frequently in the pretraining data?</p>
+<figure><img alt="BlindTest figure 12" decoding="async" height="384" loading="lazy" src="/assets/blindtest/figure-12.png" width="832"/></figure>
+<h3>Task 4: Counting Olympic-style rings</h3>
+<p>The VLM must count the shapes in an image of multiple interlocking circles arranged like an Olympic logo.</p>
+<p>There are 480 images and 960 question–answer pairs, spanning different image sizes, shape counts, radii, line widths, and colors. The authors also flip images and replace circles with pentagons.</p>
+<figure><img alt="BlindTest figure 13" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-13.png" width="2908"/></figure>
+<p>The following experiments vary resolution, color, and ground-truth count. The paper argues that resolution and color have little effect, but I see a clear drop for Sonnet 3.5 at resolution 384. This resembles something I have observed before: changing the resolution of the same image can produce abrupt, non-smooth performance changes. For example, performance at resolution 200 can be substantially worse than at both 100 and 300.</p>
+<p>The results become more extreme across shapes and configurations. VLMs do very well on the familiar five-circle arrangement, while other shape-and-count combinations yield mixed results. This looks like a clear VLM bias. (It is no surprise that the authors later wrote a paper on bias.)</p>
+<figure><img alt="BlindTest figure 14" decoding="async" height="1134" loading="lazy" src="/assets/blindtest/figure-14.png" width="1410"/></figure>
+<p>The next figure makes the pattern clearer. Gemini has a strong bias: it keeps guessing five circles, while its pentagon counts are close to random guesses. The other three models also show clear preferences. When the ground truth is five circles, all tend to guess five; for five pentagons, their preferences differ.</p>
+<figure><img alt="BlindTest figure 15" decoding="async" height="1032" loading="lazy" src="/assets/blindtest/figure-15.png" width="1446"/></figure>
+<h3>Task 5: Counting nested squares</h3>
+<p>The VLM must report the number of squares in a nested arrangement.</p>
+<p>There are 120 images and 240 question–answer pairs. Variables include square count, line width, and shape position.</p>
+<figure><img alt="BlindTest figure 16" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-16.png" width="2908"/></figure>
+<p>The line-width ablation shows no significant effect.</p>
+<figure><img alt="BlindTest figure 17" decoding="async" height="354" loading="lazy" src="/assets/blindtest/figure-17.png" width="720"/></figure>
+<h3>Task 6: Counting grid rows and columns</h3>
+<p>The VLM must count the rows and columns in a grid image.</p>
+<p>There are 264 images and 528 question–answer pairs. Variables include row count, column count, line width, image size, and whether the cells contain text.</p>
+<figure><img alt="BlindTest figure 18" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-18.png" width="2908"/></figure>
+<p>Adding text to the cells substantially improves performance. Could this be related to the tokenizer?</p>
+<figure><img alt="BlindTest figure 19" decoding="async" height="262" loading="lazy" src="/assets/blindtest/figure-19.png" width="732"/></figure>
+<h3>Task 7: Counting routes from A to B</h3>
+<p>The VLM must find the number of paths from A to B in a simulated subway map.</p>
+<p>There are 180 images and 720 question–answer pairs. The images are entirely synthetic. Grid nodes are randomly selected as turns in the routes, while A, B, C, and D are four simulated stations with fixed positions. Maps are then generated with different numbers of available routes and image sizes.</p>
+<figure><img alt="BlindTest figure 20" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-20.png" width="2908"/></figure>
+<p>The results show that more routes lead to worse model performance. This also matches intuition.</p>
+<figure><img alt="BlindTest figure 21" decoding="async" height="742" loading="lazy" src="/assets/blindtest/figure-21.png" width="732"/></figure>
+<h2>3 Other findings</h2>
+<p>There are many other related findings, including the following.</p>
+<h3>Chain of thought offers little help on these low-level perception tasks</h3>
+<figure><img alt="BlindTest figure 22" decoding="async" height="336" loading="lazy" src="/assets/blindtest/figure-22.png" width="1754"/></figure>
+<h3>Asking VLMs to reconstruct images using graphics languages</h3>
+<p>This experiment draws on earlier work on VLM image reconstruction: <a href="https://arxiv.org/abs/2408.03940">Pixel Value Prediction: How Well Can Vision Language Models See Image Details?</a>.</p>
+<p>Below are reconstructions generated by Sonnet 3.5 using SVG, HTML, JS, and Python. They are a mess, with many key features lost.</p>
+<figure><img alt="BlindTest figure 23" decoding="async" height="1260" loading="lazy" src="/assets/blindtest/figure-23.png" width="1406"/></figure>
+<h3>Trying to improve performance through training</h3>
+<p>Fine-tuning Bunny: the authors fine-tune Bunny on whether two circles intersect, with very poor results. In the figure below, accuracy drops abruptly from 100% to 0% at positive distances, and the pattern becomes more pronounced with larger training sets. This raises the possibility that the model has degenerated into always answering “overlap.” At 50K, this degeneration does occur: the authors report that the model loses the ability to answer and outputs only an end token.</p>
+<p>PixelBench also tried to improve performance with synthetic data, without success. The failure here seems even more complete: even in-domain performance shows no significant improvement. That is very strange. Why does it happen?</p>
+<figure><img alt="BlindTest figure 24" decoding="async" height="1524" loading="lazy" src="/assets/blindtest/figure-24.png" width="1388"/></figure>
+<h3>Testing models on simplified problems</h3>
+<p>For example, increasing the spacing between adjacent letters in the circled-letter experiment improves accuracy. This is intuitive. In the sixth section on the vision encoder, the authors cite it as evidence that the problem is not OOD: when the setting is simpler, models can answer correctly even though the images are still synthetic OOD images. They argue that failures therefore do not arise from the unfamiliar form of the questions.</p>
+<figure><img alt="BlindTest figure 25" decoding="async" height="706" loading="lazy" src="/assets/blindtest/figure-25.png" width="532"/></figure>
+<h3>The vision encoder already supplies enough information</h3>
+<p>This section seeks to show that poor performance comes neither from synthetic images being rare in the training set and thus OOD, nor from problems with prompts, line colors, and so on. Instead, in harder settings, such as small letter spacing or circle gaps, the model lacks the ability to convert key visual information into answers.</p>
+<p>To demonstrate this, the paper uses SigLIP and CLIP, the vision encoders in two small state-of-the-art open-source VLMs: 0.5B LLaVA-OneV-S and 4.2B Phi-3.5. The authors generate roughly twenty thousand examples across two tasks: circle overlap and line intersections.</p>
+<p>Features from two stages are then used as inputs to linear classifiers: 1. after the vision encoder but before projection; 2. after projection.</p>
+<figure><img alt="BlindTest figure 26" decoding="async" height="1114" loading="lazy" src="/assets/blindtest/figure-26.png" width="868"/></figure>
+<p>The linear classifiers achieve very high accuracy, showing that the vision encoder retains enough visual information to complete the required classification tasks.</p>
+<figure><img alt="BlindTest figure 27" decoding="async" height="368" loading="lazy" src="/assets/blindtest/figure-27.png" width="1008"/></figure>
+<h2>Summary and follow-up</h2>
+<p>Further reading:</p>
+<p>On the limitations of MMMU:</p>
+<p><a href="https://arxiv.org/abs/2403.20330">Are We on the Right Way for Evaluating Large Vision-Language Models?</a></p>
+<p>On late fusion:</p>
+<p><a href="https://arxiv.org/abs/2405.09818">Chameleon: Mixed-Modal Early-Fusion Foundation Models</a></p>
+<p><a href="https://arxiv.org/abs/2304.08485">Visual Instruction Tuning</a></p>
+<p>On visual hallucinations in large models:</p>
+<p><a href="https://arxiv.org/abs/2401.06209">Eyes Wide Shut? Exploring the Visual Shortcomings of Multimodal LLMs</a></p>
+<p>On image reconstruction:</p>
+<p><a href="https://arxiv.org/abs/2408.03940">Pixel Value Prediction: How Well Can Vision Language Models See Image Details?</a></p>
+<p><a href="https://arxiv.org/abs/2506.07803">Image Reconstruction as a Tool for Feature Analysis</a></p>
+<p><a href="https://arxiv.org/abs/2510.11690">Diffusion Transformers with Representation Autoencoders</a></p>
+<p><a href="https://openaccess.thecvf.com/content_cvpr_2015/html/Mahendran_Understanding_Deep_Image_2015_CVPR_paper.html">Understanding Deep Image Representations by Inverting Them</a></p>
+<p>On attribution inside models:</p>
+<p><a href="https://arxiv.org/abs/2610.21114">Spectral-Spatial Interpretation</a></p>
+
+</div>

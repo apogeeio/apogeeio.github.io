@@ -1,0 +1,176 @@
+<div class="pixelbench-body">
+<p>I recently came across an interesting paper from the Chinese University of Hong Kong, released on November 2: <a href="https://haoquanzhang.github.io/pixelbench/?lang=zh#fnref:zh-understanding-setup">Can LLMs understand and generate images pixel by pixel?</a></p>
+<p>The author also has a promotional post: <a href="https://www.xiaohongshu.com/user/profile/6325ef2a0000000023027921/6ae329970000000019003aa2">PixelBench: Can Large Models Make Fuse-Bead Art?</a></p>
+<p>Here is a brief walkthrough. For more detail, see the authors' blog and paper.</p>
+<section aria-label="TL;DR" class="tldr"><b>TL;DR</b><p>PixelBench introduces a benchmark that uses a palette and a grid of pixel indices to evaluate language models' ability to generate and understand pixel images through text. Astra stands out; other models perform less well and are more prone to degradation at higher resolutions. The authors also propose Pixel Reconstruction Tuning (PRT), which adds pixel reconstruction to visual instruction tuning. Adding 2,000 reconstruction examples to Molmo2-4B's 500,000 instruction examples improves the average visual-understanding evaluation score by about 0.5–0.6 points.</p></section>
+<hr/>
+<figure><img alt="PixelBench figure 1" decoding="async" height="948" src="/assets/pixelbench/figure-01.png" width="1606"/></figure>
+<h2>1 How can a model represent and output an image?</h2>
+<p>The paper first considers how to let a language model such as GPT-6 generate images.</p>
+<p>A language model cannot directly output pixels as an image when its architecture and vocabulary remain unchanged: it can only produce text tokens. We can nevertheless achieve the goal through additional or indirect methods. For example, we can ask the model to output a domain-specific language such as SVG or CAD to describe the image, then render it. More generally, a model can use Python libraries to generate the image it wants to express. We can also take a pixel-level approach and ask it to output every pixel's RGB value. These representations differ in expressive power and suitable applications.</p>
+<p>(Clearly, the choice of representation affects what a model can express and how well it expresses it. How large is that effect? How can we exclude alignment as a confounding factor? Perhaps the model knows the answer but is unfamiliar with this newly defined task and output format. Is its generalization strong enough to use this medium zero-shot?)</p>
+<p>(Perhaps two types of experiments would help: ① Representation ablations: on the same task, does performance differ substantially between SVG and pixel-by-pixel RGB output? ② OOD improvement: after reconstruction training, does the model's ability in OOD settings improve significantly? This would help establish that the evaluation reflects an underlying ability, rather than an unfamiliar input/output format leaving the model unable to express what it knows.)</p>
+<h2>2 Pixels and a palette</h2>
+<p>The paper settles on constrained pixel art as the language model's output format. Repeating full RGB values for every pixel creates large amounts of repetitive text and substantially increases token costs. PixelBench uses a palette plus a two-dimensional index grid. It first outputs a palette of 2–8 opaque colors, followed by an S × S index grid. The palette uses <code>#RRGGBB</code> values, and each grid character, <code>0</code>–<code>7</code>, refers to one color. Both parts are expressed in JSON and rendered as an image.</p>
+<p>The output is pure text, with no tool calls or agent framework. This is a test of the model on its own.</p>
+<figure><img alt="PixelBench figure 2" decoding="async" height="672" loading="lazy" src="/assets/pixelbench/figure-02.png" width="1650"/></figure>
+<h2>3 What can the models draw?</h2>
+<p>The paper begins with two generation tasks: Text-to-Pixel and Image-to-Pixel.</p>
+<h3>Text-to-Pixel (T2P)</h3>
+<p>Give the model an object name, such as rabbit, mushroom, or train, and ask it to draw the corresponding pixel image. A form of reconstruction evaluation then checks whether the concept and information in the text have made it into the image: does the drawing actually depict a rabbit? The authors compile a list of 100 concepts and ask models including GPT-6 Astra and Claude Opus 5 to generate images zero-shot, then evaluate them in two ways. First, SigLIP matches the generated image against text representations of 500 candidate concepts, measuring whether the correct concept ranks first. Candidate text uses a shared pixel-icon description template. Second, Gemini 3.5 Flash scores the rendered image against the target concept using six criteria worth 100 points in total.</p>
+<p>(Why choose Gemini 3.5 Flash? Does it only act as a judge, without participating in the generation evaluation? Why score the images instead of following SigLIP's approach and asking a VLM to classify them? Are 500 candidate classes too many?)</p>
+<p>The scoring criteria and weights are:</p>
+<div class="table-wrap"><table class="results">
+<thead>
+<tr>
+<th>VLM scoring criterion</th>
+<th style="text-align:right">Maximum</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Correct and clearly recognizable subject</td>
+<td style="text-align:right">20</td>
+</tr>
+<tr>
+<td>Complete key parts and identifying features</td>
+<td style="text-align:right">25</td>
+</tr>
+<tr>
+<td>Reasonable silhouette, structure, and proportions</td>
+<td style="text-align:right">20</td>
+</tr>
+<tr>
+<td>Accurate and useful internal details</td>
+<td style="text-align:right">20</td>
+</tr>
+<tr>
+<td>Clear pixel clusters and edge organization</td>
+<td style="text-align:right">10</td>
+</tr>
+<tr>
+<td>Palette and contrast support recognition</td>
+<td style="text-align:right">5</td>
+</tr>
+</tbody>
+</table></div>
+<p>The results are visually immediate. GPT models do well, especially Astra's 16 × 16 output, which preserves the main features and subject well enough to resemble a pixel-game icon. Opus also does fairly well. The others are much less impressive: their handling of shape is abstract and distorted enough to be hard to look at. (Gemini and the Chinese models perform particularly poorly. Why? Would letting a model inspect its rendered output and revise it improve the result?)</p>
+<figure><img alt="PixelBench figure 3" decoding="async" height="1298" loading="lazy" src="/assets/pixelbench/figure-03.png" width="1802"/></figure>
+<figure><img alt="PixelBench figure 4" decoding="async" height="1272" loading="lazy" src="/assets/pixelbench/figure-04.png" width="1800"/></figure>
+<figure><img alt="PixelBench figure 5" decoding="async" height="884" loading="lazy" src="/assets/pixelbench/figure-05.png" width="1660"/></figure>
+<h3>Image-to-Pixel (I2P)</h3>
+<p>Here the model performs a low-resolution reconstruction task, evaluated through reconstruction losses. Given a reference image, it must output a reconstructed pixel image preserving the subject, pose, composition, and related information. Several traditional methods perform the same task as baselines. Evaluation reports reference-image retrieval accuracy, SigLIP similarity, and DINO similarity.</p>
+<p>The paper selects one image from each of 100 ImageNet-1K classes. Traditional methods are at least excellent at downsampling: they compress information evenly, in a way that matches intuition. Models show a more semantic inclination. For instance, they often render sky and ground as uniform colors rather than the layered colors produced by traditional methods. (Could this also come from the restricted palette size?) They tend to draw the dog's distinctive features: the GPT example below attempts to preserve the white patches on its chest and tail, along with a recognizable head, tail, and legs, producing something closer to pixel art. The two approaches allocate their limited pixels differently. This is also expected: large models tend to emphasize semantic and conceptual features.</p>
+<p>The ranking is consistent with T2P: GPT models are generally strong, especially Astra; Opus is acceptable; the others generally perform poorly.</p>
+<p>(The same question applies: what happens if the model can retry after seeing the rendered image?)</p>
+<figure><img alt="PixelBench figure 6" decoding="async" height="1426" loading="lazy" src="/assets/pixelbench/figure-06.png" width="1782"/></figure>
+<p>To me, both tests are fundamentally about information. How does information move between text and images? This transformation usually involves information loss, but how much? How should we measure and define it? Can models perform this transformation and compression well?</p>
+<h2>4 Scaling the canvas</h2>
+<p>A natural next question follows from all the simplifications above. We have restricted the number of colors and output size. What happens if we provide a larger canvas? (More radically, what if we allow the full RGB color space and match the output resolution to the reference image? Such a large output would exceed context-length limits.)</p>
+<p>The paper tests several configurations. With a fixed set of 50 concepts and 50 reference images, Astra, Sol, Opus, and Gemini generate outputs at ten side lengths: 16, 24, 32, 40, 48, 64, 80, 96, 112, and 128. The results remain interesting: only Astra holds up, while all the others degrade. (Is this a long-context effect? Tens of thousands of tokens do not seem especially long.)</p>
+<p>GPT-5.6 Sol and Claude Opus 5 both show some degradation, with higher resolution failing to bring more detail. Gemini deteriorates more severely, to the point of expressing little meaningful content.</p>
+<p>(Astra's advantage is striking here. What does it mean? Did OpenAI deliberately train on something similar, or does the ability emerge naturally?)</p>
+<figure><img alt="PixelBench figure 7" decoding="async" height="1598" loading="lazy" src="/assets/pixelbench/figure-07.png" width="1864"/></figure>
+<h2>5 If a model can draw it, can it read it?</h2>
+<p>Give a model a palette and index grid and ask it to select the depicted concept from ten candidates. Can it recognize what the image contains? (This is a textual encoding. What happens if we instead provide the rendered image? Would the correlation between reading and writing abilities persist?)</p>
+<p>The inputs are pixel images generated by Astra and PIA-reduced, which language models then classify. Each source contributes 100 questions at each of three resolutions, for 600 ten-way multiple-choice questions in total. Models receive only palette and grid text. The results match expectations: across the tested models, understanding scores have Pearson correlations of 0.871 with T2P and 0.930 with I2P, both strong correlations.</p>
+<figure><img alt="PixelBench figure 8" decoding="async" height="930" loading="lazy" src="/assets/pixelbench/figure-08.png" width="1336"/></figure>
+<h2>6 Training visual understanding through pixel reconstruction</h2>
+<p>The paper proposes Pixel Reconstruction Tuning (PRT), a post-training method that uses pixel reconstruction as auxiliary supervision. The authors select a subset of PixMo-Cap, create reconstructed images with PIA-reduced, and retain only results with high SigLIP2 similarity. They then use Gemini 3.8 Flash to generate image descriptions and palette explanations.</p>
+<p>(Why use Gemini 3.8 Flash here? Why did it not take part in the earlier evaluation? Are its descriptions reliable?)</p>
+<p>Each training example works as follows. The model receives the original image and a prompt, and learns to output three parts: <code>&lt;CAPTION&gt;</code>, <code>&lt;PALETTE&gt;</code>, and <code>&lt;GRID&gt;</code>. It first describes the image, then explains the colors, then provides the reconstruction grid. The format is:</p>
+<pre><code class="language-text">&lt;CAPTION&gt;
+&lt;A short description of the image content and composition&gt;
+&lt;/CAPTION&gt;
+
+&lt;PALETTE&gt;
+&lt;Overall explanation of the color choices&gt;
+
+a &lt;hex color&gt; (&lt;color name&gt;): &lt;objects, regions, and positions covered&gt;
+b &lt;hex color&gt; (&lt;color name&gt;): &lt;objects, regions, and positions covered&gt;
+...
+h &lt;hex color&gt; (&lt;color name&gt;): &lt;objects, regions, and positions covered&gt;
+
+Layout: &lt;Spatial layout of the main color regions&gt;
+&lt;/PALETTE&gt;
+
+&lt;GRID&gt;
+["&lt;color value for a&gt;", "&lt;color value for b&gt;", ..., "&lt;color value for h&gt;"]
+&lt;Color indices arranged row by row&gt;
+&lt;/GRID&gt;
+</code></pre>
+<p>I wanted to inspect a few concrete training examples but could not find them. Perhaps I could ask the authors for some.</p>
+<p>The experiment starts post-training from a pretrained Molmo2-4B checkpoint. The control group uses 500,000 LLaVA-OneVision-1.5 instruction examples; the experimental group adds 2,000 PRT examples. Both train all modules for one pass through the data, with the following results:</p>
+<figure><img alt="PixelBench figure 9" decoding="async" height="738" loading="lazy" src="/assets/pixelbench/figure-09.png" width="1794"/></figure>
+<p>(The improvement is not particularly large. Is the issue the test set, model, or training method? What would happen with Qwen 27B? Why use 500,000 instruction examples? Could we train directly on the 2,000 examples alone?)</p>
+<p>The paper also reports Qwen experiments with a similar setup. The control group post-trains Qwen3-VL-2B/4B/8B on FineVision, while the experimental group adds constructed PRT question–answer pairs as supervision. The target output is:</p>
+<pre><code class="language-json">{
+  "palette": ["&lt;color 0&gt;", "&lt;color 1&gt;", "..."],
+  "pixels": [
+    "&lt;Color indices for the first row&gt;",
+    "&lt;Color indices for the second row&gt;",
+    "..."
+  ]
+}
+</code></pre>
+<p>The results below do show a positive signal, with improvements of varying sizes. Yet none of the settings improves by more than five points. Is scale the issue?</p>
+<figure><img alt="PixelBench figure 10" decoding="async" height="436" loading="lazy" src="/assets/pixelbench/figure-10.png" width="1600"/></figure>
+<h2>7 Open questions</h2>
+<p>For training-set size, the paper reports scaling from 1,000 to 8,000 examples without a significant further improvement. This is puzzling: why does more data fail to help substantially? Where is the problem?</p>
+<div class="table-wrap"><table class="results">
+<thead>
+<tr>
+<th style="text-align:right">PRT examples</th>
+<th style="text-align:right">Average over evaluation units</th>
+<th style="text-align:right">Average over benchmarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1,000</td>
+<td style="text-align:right">+0.40</td>
+<td style="text-align:right">+0.56</td>
+</tr>
+<tr>
+<td style="text-align:right">2,000</td>
+<td style="text-align:right">+0.61</td>
+<td style="text-align:right">+0.45</td>
+</tr>
+<tr>
+<td style="text-align:right">4,000</td>
+<td style="text-align:right">+0.36</td>
+<td style="text-align:right">+0.39</td>
+</tr>
+<tr>
+<td style="text-align:right">8,000</td>
+<td style="text-align:right">+0.50</td>
+<td style="text-align:right">+0.51</td>
+</tr>
+</tbody>
+</table></div>
+<p>For pixel dimensions, the paper uses a palette and a small pixel grid. Higher output resolution increases training cost, while lower resolution loses too much information. Can we find a useful balance, or a better representation?</p>
+<p>For visual representation, we have palettes, raw pixels, SVG, and bounding boxes or points. What are their respective strengths and weaknesses? Which representation could preserve the fidelity of pixel-by-pixel RGB output while keeping the sequence short?</p>
+<p>This brings compression algorithms to mind. Is the representation lossy or lossless? If it is lossy, what information do we care about and need to preserve? What can be discarded to shorten the sequence?</p>
+<p>From the perspective of model training, what kind of grounding signal should we include? It should be easy to construct for self-supervised learning, expressive enough to convey more information, and sparse and compact enough to support reconstruction alignment. How exactly should we incorporate it into training? How much improvement could it deliver? Would the improvement be significant enough?</p>
+<p>Also, why does Astra already have such strong pixel-generation ability? Was it deliberately trained or did the ability emerge? What about Opus 5.5 or Gemini 4?</p>
+<p>Overall, I find this work very interesting. I like studies that evaluate models under the cleanest possible conditions and try to investigate their atomic abilities. Such work can help us understand how large models operate and get at something fundamental. Why does this happen? What does an image look like through a model's eyes? There is so much left to explore.</p>
+<p>I have done a few related experiments myself: placing small balls on a solid background, using clear SVG images, and asking large models to locate them, count them, or judge whether they intersect. I have also read several similar papers. The benefit is a clean setup and the ability to synthesize data in bulk. One potential problem is OOD: models may never see such samples during training, and users rarely encounter such clean scenes. Can we trust their generalization?</p>
+<p>I plan to explore this direction further.</p>
+<p>Further reading:</p>
+<p>Representing images through generative languages:</p>
+<p><a href="https://arxiv.org/abs/2401.01862">A Vision Check-up for Language Models</a></p>
+<p><a href="https://arxiv.org/abs/2408.08313">Can Large Language Models Understand Symbolic Graphics Programs?</a></p>
+<p><a href="https://arxiv.org/abs/2509.05208">Symbolic Graphics Programming with Large Language Models</a></p>
+<p><a href="https://arxiv.org/abs/2412.11102">Empowering LLMs to Understand and Generate Complex Vector Graphics</a></p>
+<p><a href="https://arxiv.org/abs/2409.17106">Text2CAD: Generating Sequential CAD Models from Beginner-to-Expert Level Text Prompts</a></p>
+<p><a href="https://arxiv.org/abs/2312.11556">StarVector: Generating Scalable Vector Graphics Code from Images and Text</a></p>
+<p>Multimodal image generation:</p>
+<p><a href="https://arxiv.org/abs/2405.09818">Chameleon: Mixed-Modal Early-Fusion Foundation Models</a></p>
+<p><a href="https://www.nature.com/articles/s41586-025-10041-x">Multimodal learning with next-token prediction for large multimodal models</a></p>
+<p>Image reconstruction alignment:</p>
+<p><a href="https://arxiv.org/abs/2509.07295">Reconstruction Alignment Improves Unified Multimodal Models</a></p>
+<p>Encoders: SigLIP and DINOv2:</p>
+<p><a href="https://arxiv.org/abs/2303.15343">Sigmoid Loss for Language Image Pre-Training</a></p>
+<p><a href="https://arxiv.org/abs/2304.07193">DINOv2: Learning Robust Visual Features without Supervision</a></p>
+
+</div>

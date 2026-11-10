@@ -2,7 +2,7 @@
 
 Personal website: [apogeeio.github.io](https://apogeeio.github.io/).
 
-English and Chinese versions of the homepage and Blog. The homepage biography is retained as an HTML comment. The first Blog article is a visible placeholder layout; its shared structure is in `content/article.html` and its styles are in `assets/article.css`. Edit the text in `content/en.json` and `content/zh.json`; illustrations and styles are in `assets/`.
+English and Chinese versions of the homepage and Blog, including articles on Weight-Space Programming, PixelBench, and BlindTest. The homepage biography is retained as an HTML comment. The shared article structure is in `content/article.html` and its styles are in `assets/article.css`. Article bodies and bilingual metadata are in `content/`; illustrations and styles are in `assets/`.
 
 ## Preview
 

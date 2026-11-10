@@ -81,5 +81,27 @@
     "grading_note": "Scoring uses game categories: a Frogger-style road-crossing answer is accepted for Freeway. Confidence is self-reported; output token counts include reasoning tokens.",
     "error_analysis": "DeepSeek guesses Sokoban three times, Snake once and Asterix once. In one striking error, it reconstructs a symmetric maze from the Pac-Man weights, then calls it Asterix with 88% confidence.",
     "results_link": "Full statistics, methods and result records"
-  }
+  },
+  "posts": [
+    {
+      "slug": "blindtest",
+      "title": "BlindTest: The Basic Perceptual Blind Spots of Vision-Language Models",
+      "kicker": "BlindTest",
+      "heading": "The Basic Perceptual Blind Spots of Vision-Language Models",
+      "date": "November 10, 2026",
+      "teaser": "Counting intersections, finding circled letters, and counting overlapping shapes: revisiting BlindTest to ask what vision encoders retain and why models still answer incorrectly.",
+      "cover": "/assets/blindtest/figure-01.png",
+      "body": "blindtest-en.html"
+    },
+    {
+      "slug": "pixelbench",
+      "title": "PixelBench: Can Large Models Make Fuse-Bead Art?",
+      "kicker": "PixelBench",
+      "heading": "Can Large Models Make Fuse-Bead Art?",
+      "date": "November 6, 2026",
+      "teaser": "PixelBench uses palettes and pixel-index grids to test how language models generate and understand pixel images, and explores pixel reconstruction as training for visual understanding.",
+      "cover": "/assets/pixelbench/figure-01.png",
+      "body": "pixelbench-en.html"
+    }
+  ]
 }
