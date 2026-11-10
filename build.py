@@ -30,10 +30,13 @@ def article_images(body, slug, language):
         image = match.group(0)
         src = re.search(r'\bsrc="([^"]+)"', image).group(1)
         alt = re.search(r'\balt="([^"]*)"', image)
+        width = int(re.search(r'\bwidth="([0-9]+)"', image).group(1))
+        height = int(re.search(r'\bheight="([0-9]+)"', image).group(1))
         number = int(Path(src).stem.rsplit('-', 1)[1])
         kind = next((kind for kind, numbers in layouts[slug].items() if number in numbers), 'result')
         label = ('放大图片：' if language == 'zh' else 'Enlarge image: ') + (unescape(alt.group(1)) if alt else str(number))
-        return f'<a class="article-image image-preview--{kind}" href="{src}" data-image-viewer aria-haspopup="dialog" aria-label="{escape(label, quote=True)}">{image}</a>'
+        size = f'--image-width:{width}px;--image-ratio:{width / height:.9f}'
+        return f'<a class="article-image image-preview--{kind}" style="{size}" href="{src}" data-image-viewer aria-haspopup="dialog" aria-label="{escape(label, quote=True)}">{image}</a>'
 
     return re.sub(r'<img\b[^>]*>', preview, body)
 

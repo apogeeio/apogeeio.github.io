@@ -81,12 +81,12 @@ html:lang(zh) .post-appendix { line-height: 1.75; }
   --preview-width: 640px;
   --preview-height: 440px;
   display: block;
-  width: fit-content;
-  max-width: min(100%, var(--preview-width));
+  width: min(100%, var(--preview-width), var(--image-width), calc(var(--preview-height) * var(--image-ratio)));
+  max-width: 100%;
   margin: 0 auto;
   cursor: zoom-in;
 }
-.post-body .article-image img { width: auto; height: auto; max-width: 100%; max-height: var(--preview-height); object-fit: contain; }
+.post-body .article-image img { width: 100%; height: auto; max-width: 100%; max-height: var(--preview-height); object-fit: contain; }
 .post-body .image-preview--montage { --preview-width: 520px; --preview-height: 420px; }
 .post-body .image-preview--wide { --preview-width: 760px; }
 .post-body .image-preview--tall { --preview-height: 480px; }
