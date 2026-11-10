@@ -36,7 +36,7 @@ def article_images(body, slug, language):
         kind = next((kind for kind, numbers in layouts[slug].items() if number in numbers), 'result')
         label = ('放大图片：' if language == 'zh' else 'Enlarge image: ') + (unescape(alt.group(1)) if alt else str(number))
         size = f'--image-width:{width}px;--image-ratio:{width / height:.9f}'
-        return f'<a class="article-image image-preview--{kind}" style="{size}" href="{src}" data-image-viewer aria-haspopup="dialog" aria-label="{escape(label, quote=True)}">{image}</a>'
+        return f'<a class="article-image image-preview--{kind}" style="{size}" href="{src}" data-image-viewer data-pswp-width="{width}" data-pswp-height="{height}" aria-haspopup="dialog" aria-label="{escape(label, quote=True)}">{image}</a>'
 
     return re.sub(r'<img\b[^>]*>', preview, body)
 
@@ -108,7 +108,8 @@ def render(c, language, page, post=None):
     main_content = body if page == 'post' else f'<article class="page {page}">{body}</article>'
     article_styles = f'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css?v={hashlib.sha256((ROOT / "assets/article.css").read_bytes()).hexdigest()[:12]}"><link rel="stylesheet" href="/assets/experiment-one.css?v={hashlib.sha256((ROOT / "assets/experiment-one.css").read_bytes()).hexdigest()[:12]}"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
     if post and post['slug'] in ('blindtest', 'pixelbench'):
-        article_styles += f'<script src="/assets/image-viewer.js?v={hashlib.sha256((ROOT / "assets/image-viewer.js").read_bytes()).hexdigest()[:12]}" defer></script>'
+        article_styles += '<link rel="stylesheet" href="/assets/vendor/photoswipe/5.4.4/photoswipe.css">'
+        article_styles += f'<script type="module" src="/assets/image-viewer.js?v={hashlib.sha256((ROOT / "assets/image-viewer.js").read_bytes()).hexdigest()[:12]}"></script>'
     current_home = ' aria-current="page"' if page == 'home' else ''
     current_blog = ' aria-current="page"' if page != 'home' else ''
     return url, f'''<!doctype html>

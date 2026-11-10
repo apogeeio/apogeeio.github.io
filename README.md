@@ -20,3 +20,5 @@ Pushes to `main` deploy through GitHub Pages. The generated `_site/` directory i
 ## Design
 
 Visual reference: [Rikiya Takehi](https://rikiyat.github.io/), based on [AcademicPages](https://github.com/academicpages/academicpages.github.io) and [Minimal Mistakes](https://github.com/mmistakes/minimal-mistakes). Template license notices are retained in `THIRD_PARTY_LICENSES`.
+
+BlindTest and PixelBench image galleries use [PhotoSwipe 5.4.4](https://photoswipe.com/), with wheel and pinch zoom. The library is served locally from `assets/vendor/photoswipe/5.4.4/`; its MIT license is included there and in `THIRD_PARTY_LICENSES`.
