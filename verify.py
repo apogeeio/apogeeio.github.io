@@ -37,7 +37,7 @@ for route in routes:
     assert '<main id="main">' in html, f'Wrong page content: {route}'
     Page(home=route in ('index.html', 'zh/index.html')).feed(html)
 assert not (ROOT / 'blog/placeholder').exists(), 'Unpublished article was generated'
-for slug, figures, tables, samples in (('pixelbench', 10, 2, 2), ('blindtest', 27, 0, 0)):
+for slug, figures, tables, samples in (('pixelbench', 10, 2, 2), ('blindtest', 27, 2, 0)):
     for prefix, other in (('', 'zh/'), ('zh/', '')):
         article = (ROOT / f'{prefix}blog/{slug}/index.html').read_text()
         assert article.count('<figure>') == figures, f'Missing {slug} figures: {prefix}'
