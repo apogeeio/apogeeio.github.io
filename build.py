@@ -2,7 +2,8 @@
 import json
 import hashlib
 import shutil
-from html import escape
+import re
+from html import escape, unescape
 from pathlib import Path
 from string import Template
 
@@ -11,6 +12,30 @@ OUT = ROOT / '_site'
 BASE = 'https://apogeeio.github.io'
 
 GLOBE = '<svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.6 3.9 5.8 3.9 9.5s-1.3 6.9-3.9 9.5M12 2.5C9.4 5.1 8.1 8.3 8.1 12s1.3 6.9 3.9 9.5"/></svg>'
+
+
+def article_images(body, slug, language):
+    layouts = {
+        'blindtest': {
+            'montage': {3, 6, 13, 16, 18, 20},
+            'wide': {2, 10, 11, 22, 27},
+            'tall': {21, 23, 24, 25, 26},
+        },
+        'pixelbench': {'montage': {3, 4, 6, 7}, 'wide': {9, 10}},
+    }
+    if slug not in layouts:
+        return body
+
+    def preview(match):
+        image = match.group(0)
+        src = re.search(r'\bsrc="([^"]+)"', image).group(1)
+        alt = re.search(r'\balt="([^"]*)"', image)
+        number = int(Path(src).stem.rsplit('-', 1)[1])
+        kind = next((kind for kind, numbers in layouts[slug].items() if number in numbers), 'result')
+        label = ('放大图片：' if language == 'zh' else 'Enlarge image: ') + (unescape(alt.group(1)) if alt else str(number))
+        return f'<a class="article-image image-preview--{kind}" href="{src}" data-image-viewer aria-haspopup="dialog" aria-label="{escape(label, quote=True)}">{image}</a>'
+
+    return re.sub(r'<img\b[^>]*>', preview, body)
 
 
 
@@ -70,6 +95,7 @@ def render(c, language, page, post=None):
         if post:
             article.update(kicker=post['kicker'], date=post['date'])
             article_body = (ROOT / 'content' / post['body']).read_text()
+            article_body = article_images(article_body, post['slug'], language)
         else:
             article_body = Template((ROOT / f'content/breakout-{language}.html').read_text()).substitute(experiment_rows=experiment_rows(c['article']['total_label']))
         body = Template((ROOT / 'content/article.html').read_text().split('<!-- Article template', 1)[0]).substitute(
@@ -78,6 +104,8 @@ def render(c, language, page, post=None):
             article_body=article_body)
     main_content = body if page == 'post' else f'<article class="page {page}">{body}</article>'
     article_styles = f'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Source+Sans+3:wght@300;400;600;700&amp;display=swap"><link rel="stylesheet" href="/assets/article.css?v={hashlib.sha256((ROOT / "assets/article.css").read_bytes()).hexdigest()[:12]}"><link rel="stylesheet" href="/assets/experiment-one.css?v={hashlib.sha256((ROOT / "assets/experiment-one.css").read_bytes()).hexdigest()[:12]}"><script src="/assets/experiment-one.js" defer></script>' if page == 'post' else ''
+    if post and post['slug'] in ('blindtest', 'pixelbench'):
+        article_styles += f'<script src="/assets/image-viewer.js?v={hashlib.sha256((ROOT / "assets/image-viewer.js").read_bytes()).hexdigest()[:12]}" defer></script>'
     current_home = ' aria-current="page"' if page == 'home' else ''
     current_blog = ' aria-current="page"' if page != 'home' else ''
     return url, f'''<!doctype html>
