@@ -1,0 +1,11 @@
+---
+title: "Blog"
+lang: zh
+listing:
+  contents: "*/index.qmd"
+  sort: "date desc"
+  template: ../../templates/blog-cards.ejs
+page-layout: full
+toc: false
+body-classes: page-blog
+---

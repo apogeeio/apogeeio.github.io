@@ -1,0 +1,19 @@
+---
+title: "远地点 / Apogee"
+pagetitle: "远地点 / Apogee"
+lang: zh
+toc: false
+body-classes: page-home
+---
+
+Apogee — 轨道上距离地球最远的点。创造远行之物。
+
+::: {.quick-links role="navigation" aria-label="主页链接"}
+[Blog](blog/index.qmd){.quick-link-blog}
+[|]{.divider aria-hidden="true"}
+[GitHub](https://github.com/apogeeio){.quick-link-github}
+[|]{.divider aria-hidden="true"}
+[知乎](https://www.zhihu.com/people/4mnlmy-5){.quick-link-zhihu}
+[|]{.divider aria-hidden="true"}
+[小红书](https://www.xiaohongshu.com/user/profile/6563e1b5000000000403a5f2){.quick-link-xiaohongshu}
+:::

@@ -1,24 +1,19 @@
 # Apogee
 
-Personal website: [apogeeio.github.io](https://apogeeio.github.io/).
+Personal website and technical blog: [apogeeio.github.io](https://apogeeio.github.io/).
 
-English and Chinese versions of the homepage and Blog, including articles on Weight-Space Programming, PixelBench, and BlindTest. The homepage biography is retained as an HTML comment. The shared article structure is in `content/article.html` and its styles are in `assets/article.css`. Article bodies and bilingual metadata are in `content/`; illustrations and styles are in `assets/`.
+Built with [Quarto](https://quarto.org/) in English and Chinese.
 
-## Preview
+## Local Preview
 
-Requires Python 3.10 or newer. No third-party packages are needed.
-
-```sh
-python3 build.py
-python3 -m http.server 8000 --directory _site
+```bash
+quarto preview
 ```
 
-Open `http://localhost:8000/` or `http://localhost:8000/zh/`.
+## Build
 
-Pushes to `main` deploy through GitHub Pages. The generated `_site/` directory is not committed.
+```bash
+quarto render
+```
 
-## Design
-
-Visual reference: [Rikiya Takehi](https://rikiyat.github.io/), based on [AcademicPages](https://github.com/academicpages/academicpages.github.io) and [Minimal Mistakes](https://github.com/mmistakes/minimal-mistakes). Template license notices are retained in `THIRD_PARTY_LICENSES`.
-
-BlindTest and PixelBench image galleries use [PhotoSwipe 5.4.4](https://photoswipe.com/), with wheel and pinch zoom. The library is served locally from `assets/vendor/photoswipe/5.4.4/`; its MIT license is included there and in `THIRD_PARTY_LICENSES`.
+Pushes to `main` build and deploy automatically via GitHub Pages (`.github/workflows/pages.yml`).

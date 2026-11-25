@@ -1,0 +1,79 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "*.qmd"
+    - "blog/**/*.qmd"
+    - "zh/**/*.qmd"
+    - "!exports/**"
+    - "!docs/**"
+    - "!tools/**"
+    - "!README.md"
+    - "!PUBLISHING.md"
+  resources:
+    - "assets/**"
+    - "blog/first-post/index.html"
+    - "zh/blog/first-post/index.html"
+    - "zh/blog/ape-and-rpe/index.html"
+    - "zh/posts/ape-and-rpe/index.html"
+    - ".nojekyll"
+    - "robots.txt"
+    - "!tools/**"
+    - "!exports/**"
+    - "!docs/**"
+    - "!scripts/**"
+
+website:
+  title: "Apogee"
+  site-url: "https://apogeeio.github.io/"
+  favicon: assets/favicon.svg
+  search: false
+  description: "Apogee — 轨道上距离地球最远的点。创造远行之物。"
+  navbar:
+    title: false
+    background: light
+    foreground: "#7a8288"
+    border: true
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Blog"
+        href: blog/index.qmd
+    right:
+      - icon: globe
+        aria-label: "Language"
+        menu:
+          - text: "English"
+            href: index.qmd
+          - text: "中文"
+            href: zh/index.qmd
+  page-footer:
+    background: "#f2f3f3"
+    border: true
+    left: "© 2026 Apogee. All rights reserved."
+    right:
+      - text: "GITHUB"
+        href: https://github.com/apogeeio
+
+format:
+  html:
+    theme:
+      light: litera
+      dark: darkly
+    css:
+      - styles.css
+      - assets/pe-interactive.css
+      - assets/vendor/photoswipe/5.4.4/photoswipe.css
+    toc: true
+    code-fold: true
+    html-math-method: katex
+    include-after-body:
+      - text: |
+          <script>
+          (function () {
+            var offset = (document.querySelector('meta[name="quarto:offset"]') || {}).content || '';
+            var s = document.createElement('script');
+            s.src = offset + 'assets/site-chrome.js?v=3';
+            document.body.appendChild(s);
+          })();
+          </script>

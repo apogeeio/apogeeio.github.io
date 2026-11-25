@@ -1,7 +1,21 @@
+---
+title: "BlindTest：视觉语言模型的基础感知盲点"
+author: "Apogee"
+date: "2026-11-10"
+lang: zh
+image: /assets/blindtest/figure-01.png
+toc: false
+include-in-header:
+  - text: |
+      <link rel="stylesheet" href="/assets/article.css">
+---
+
+```{=html}
+<div class="post-body">
 <div class="blindtest-body">
 <p>线段和圆是否相交？红圈圈出的字母是哪个？图片当中一共有几个圆形和方形？<a href="https://vlmsareblind.github.io/">BlindTest Benchmark</a> 使用这些人类轻易就能解决的问题作为VLM的评测集，结果发现即使是 Sonnet-3.5 也只取得了 77.84 的平均分数，距离人类的100分还有一段距离。</p>
 <p>今天分享的是 2024 年七月份的一篇工作，<a href="https://vlmsareblind.github.io/">Vision language models are blind: Failing to translate detailed visual features into words</a></p>
-<figure><img alt="BlindTest 配图 1" decoding="async" height="718" src="/assets/blindtest/figure-01.png" width="1586"/></figure>
+<figure><h4 class="fig-title">七项视觉感知任务</h4><a class="article-image image-preview--result" style="--image-width:1586px;--image-ratio:2.208913649" href="/assets/blindtest/figure-01.png" data-image-viewer data-pswp-width="1586" data-pswp-height="718" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 1"><img alt="BlindTest 配图 1" decoding="async" height="718" src="/assets/blindtest/figure-01.png" width="1586"/></a><figcaption>将任务样例与四个视觉语言模型的回答并列。</figcaption></figure>
 <section aria-label="TL;DR" class="tldr"><b>TL;DR</b><p>这篇论文提出了由七项基础视觉任务组成的 BlindTest，发现当时的顶尖 VLM 在统计图形数量、判断是否相交、识别被圈字母等任务上频频出错，表现最好的 Claude 3.5 Sonnet 平均准确率也只有 77.84%。错误尤其集中在图形重叠或彼此靠近时，拉开间距就能显著改善表现。在两个几何任务上，线性探针能从受测开源模型的视觉特征中读出正确答案，表明模型已经编码了相关视觉信息，却未能将其转化为正确的语言回答。</p></section>
 <p>这篇blog包含：1. 论文阅读时做的笔记和提出的问题  2. 追踪后续：这是两年多前的工作，目前 VLM 的能力已经远远超过了当时的SOTA模型。现在的VLM表现如何？论文中的结论还可靠吗？作者有什么后续的工作吗？（看起来系列工作主要是来自 University of Alberta 的 <a href="https://taesiri.ai/">Mohammad Reza Taesiri</a> 在推进，包括23年12月的GlitchBench，以及25年5月的 VLMBIAS BENCHMARK）</p>
 <p>我认为这篇工作最有价值的地方在于完全使用了合成数据，因此可以在大量的维度和变量上做消融对照分析，例如后面可以看到的颜色和个数上的消融。这在自然图像数据集上是很难做到的。它可能的缺陷也在于合成数据集。由于是程序化合成的，天然带有 toy image 和 OOD的特点。或许是因为这个原因，它目前好像只能用来作为探针，却没有办法真正解释现象，或进一步提出针对性的改进方法来提升模型的性能。</p>
@@ -24,7 +38,7 @@
 </ol>
 <h2>2 实验部分</h2>
 <p>结果总表如下</p>
-<figure><img alt="BlindTest 配图 2" decoding="async" height="518" loading="lazy" src="/assets/blindtest/figure-02.png" width="1426"/></figure>
+<figure><h4 class="fig-title">BlindTest 各任务准确率</h4><a class="article-image image-preview--wide" style="--image-width:1426px;--image-ratio:2.752895753" href="/assets/blindtest/figure-02.png" data-image-viewer data-pswp-width="1426" data-pswp-height="518" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 2"><img alt="BlindTest 配图 2" decoding="async" height="518" loading="lazy" src="/assets/blindtest/figure-02.png" width="1426"/></a><figcaption>表格对比各模型和随机基线在基准任务上的准确率。</figcaption></figure>
 <p>可以看到其实 Sonnet-3.5 已经表现得不错了，虽然还不能在这种easy case 上达到100%正确率。</p>
 <p>受测模型方面，文章测试了：</p>
 <p>4个闭源SOTA模型GPT-4o, Gemini-1.5 Pro, Claude-3 Sonnet, Claude-3.5。它们在另外 7 个 VLM bench 上表现最好，包括 MMMU, AI2D, Math-Vista, ChartQA, DocVQA, ActivityNet-QA, EgoSchema。Claude 3 Opus 跑了一半测试，中途停了。</p>
@@ -34,80 +48,80 @@
 <h3>Task 1 给出折线段交点个数</h3>
 <p>对于两条折线段，每一条都由两段线段组成。它们可能有 0、1、2 个交点。VLM需要指出交点的个数。
 共含有 1800 张图片，对应 3,600 条问答，它们是边长为 384、768 或 1152 像素的方形图片。对于两条折线，三个点的 x 坐标被固定在最左、正中和最右，而 y 坐标在预定义好的 12 × 12 网格中随机采样。线段的粗细也作为变量被随机采样。</p>
-<figure><img alt="BlindTest 配图 3" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-03.png" width="2908"/></figure>
-<figure><img alt="BlindTest 配图 4" decoding="async" height="700" loading="lazy" src="/assets/blindtest/figure-04.png" width="1460"/></figure>
+<figure><h4 class="fig-title">折线交点</h4><a class="article-image image-preview--montage" style="--image-width:2908px;--image-ratio:1.000000000" href="/assets/blindtest/figure-03.png" data-image-viewer data-pswp-width="2908" data-pswp-height="2908" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 3"><img alt="BlindTest 配图 3" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-03.png" width="2908"/></a><figcaption>两条折线可以有零个、一个或两个交点。</figcaption></figure>
+<figure><h4 class="fig-title">线宽与点间距</h4><a class="article-image image-preview--result" style="--image-width:1460px;--image-ratio:2.085714286" href="/assets/blindtest/figure-04.png" data-image-viewer data-pswp-width="1460" data-pswp-height="700" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 4"><img alt="BlindTest 配图 4" decoding="async" height="700" loading="lazy" src="/assets/blindtest/figure-04.png" width="1460"/></a><figcaption>表格比较不同线宽；热图按折线顶点间距汇总结果。</figcaption></figure>
 <p>图片左侧为对线条粗细做的消融，可以看到线体粗一些成功率反而普遍下降了一点点，这还挺反直觉的；右侧是对于“两条折线段是比较贴近还是相距很远”的消融，结果除了GPT普遍较差，Sonnet 3.5 普遍较好外，其余模型都会在两条线段相距很远的时候表现更好一些。这个是符合预期的：很贴近的两条线，相对更难分清是否相交了；而隔得很远就更容易区分一点，例如在相隔距离最远的样本集上，4个模型有3个都取得了100%的成功率。</p>
 <p>此外，大模型普遍糟糕的表现，与它们在 ChartQA 上的优良表现也有点矛盾。这或许说明了 Chart QA 并没有那么“视觉”，更多考察推理等等能力。</p>
 <p>然后是对于尺寸和相交个数的消融结果。图左可以看到，对于不同尺寸图像，大模型回答的成功率几乎没什么差别，对于尺寸不怎么敏感；而图右中则明显看到，图片中交点的实际数量会显著影响模型回答成功率。这可能和模型的回答偏好有关？例如Sonnet 倾向于认为图片中的线段总是相交的，而GPT则倾向于要么答0要么答2 。</p>
-<figure><img alt="BlindTest 配图 5" decoding="async" height="616" loading="lazy" src="/assets/blindtest/figure-05.png" width="1320"/></figure>
+<figure><h4 class="fig-title">交点计数消融</h4><a class="article-image image-preview--result" style="--image-width:1320px;--image-ratio:2.142857143" href="/assets/blindtest/figure-05.png" data-image-viewer data-pswp-width="1320" data-pswp-height="616" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 5"><img alt="BlindTest 配图 5" decoding="async" height="616" loading="lazy" src="/assets/blindtest/figure-05.png" width="1320"/></a><figcaption>左图按图像分辨率分组，右图按实际交点数分组。</figcaption></figure>
 <h3>Task 2 两圆是否相交重叠</h3>
 <p>对于两个等大的实心圆，VLM需要判断：它们是否相互重叠／它们是否相互接触。
 共含有 672个图像，对应 1,344 个问答，使用不同的半径、圆心距离、相对位置生成。（注意，此处论文 arXiv v6 的正文说明数字是有误的，我这里用的是实际 HF 上的真实数字）</p>
-<figure><img alt="BlindTest 配图 6" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-06.png" width="2908"/></figure>
-<figure><img alt="BlindTest 配图 7" decoding="async" height="524" loading="lazy" src="/assets/blindtest/figure-07.png" width="1478"/></figure>
+<figure><h4 class="fig-title">圆形重叠</h4><a class="article-image image-preview--montage" style="--image-width:2908px;--image-ratio:1.000000000" href="/assets/blindtest/figure-06.png" data-image-viewer data-pswp-width="2908" data-pswp-height="2908" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 6"><img alt="BlindTest 配图 6" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-06.png" width="2908"/></a><figcaption>生成样例改变两个圆的半径、间距和相对位置。</figcaption></figure>
+<figure><h4 class="fig-title">圆形重叠与相切</h4><a class="article-image image-preview--result" style="--image-width:1478px;--image-ratio:2.820610687" href="/assets/blindtest/figure-07.png" data-image-viewer data-pswp-width="1478" data-pswp-height="524" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 7"><img alt="BlindTest 配图 7" decoding="async" height="524" loading="lazy" src="/assets/blindtest/figure-07.png" width="1478"/></a><figcaption>表格区分回答类型，热图按圆的几何关系汇总结果。</figcaption></figure>
 <p>上图图左是对问题/prompt的消融，可见没啥明显规律，prompt 里面问Overlapping 或者 Touching ，成功率都没有明显的上升或下降趋势。而图右则是对圆距离的消融：可以看到都是一个“先降后升”的V型曲线。其中 Sonnet 3.5  的“波谷”明显更加偏左，这可能和 Sonnet 倾向于说“不重叠/不相交”的习惯有关，它也因此在两个圆相距较远的时候取得了很高的正确率。而GPT则在“波谷”处表现很差，说明它 “对于细节进行辨识的能力” 有所不足。</p>
 <p>（作者在此处引入 late-fusion 解释，认为可能是编码器的问题。但这就有些矛盾了。他后面线性探针一节，更倾向于得到“信息量已经足够”的结论。）</p>
 <p>然后是关于尺寸和方位的消融。可以看到各个模型都有它们自己的最大值和最小值，没有一个明显的规律。（我之前做类似实验的时候也发现过这种针对图像尺寸和方位，产生“断崖”或者“抖动”的现象，看来是一个比较复杂的问题，可能和各个模型的具体结构有关，没有一个明显的“偏好”？）</p>
-<figure><img alt="BlindTest 配图 8" decoding="async" height="554" loading="lazy" src="/assets/blindtest/figure-08.png" width="918"/></figure>
+<figure><h4 class="fig-title">圆形重叠的分辨率与朝向消融</h4><a class="article-image image-preview--result" style="--image-width:918px;--image-ratio:1.657039711" href="/assets/blindtest/figure-08.png" data-image-viewer data-pswp-width="918" data-pswp-height="554" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 8"><img alt="BlindTest 配图 8" decoding="async" height="554" loading="lazy" src="/assets/blindtest/figure-08.png" width="918"/></a><figcaption>各行比较三个图像分辨率下的垂直、水平和对角线布局。</figcaption></figure>
 <p>对于颜色，这里也做了一个对比，但是好像也没有明显的规律？（这里可以看到 深灰 + 浅灰的组合，表现比 品红 Magenta + 蓝色 Blue 的组合还要好些。一般来讲，我们会期望红加蓝这种高对比度的图片比较好区分。这让我想起之前做过类似的实验，调整 目标颜色 VS 背景颜色 ，用不同的颜色对来做消融实验，看看颜色之间对比度差异对成功率有什么影响。结果是人眼看来差别比较小的颜色配比，如白色 + 浅米色，反而在模型眼中比 黑 + 白 还要显眼，有更高的得分。这点还挺出乎意料的。）</p>
-<figure><img alt="BlindTest 配图 9" decoding="async" height="304" loading="lazy" src="/assets/blindtest/figure-09.png" width="694"/></figure>
+<figure><h4 class="fig-title">圆形颜色消融</h4><a class="article-image image-preview--result" style="--image-width:694px;--image-ratio:2.282894737" href="/assets/blindtest/figure-09.png" data-image-viewer data-pswp-width="694" data-pswp-height="304" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 9"><img alt="BlindTest 配图 9" decoding="async" height="304" loading="lazy" src="/assets/blindtest/figure-09.png" width="694"/></a><figcaption>表格比较重叠判断任务中的四种配色。</figcaption></figure>
 <h3>Task 3 辨别单词中被圈出的字母</h3>
 <p>对于一个英文单词中红圈圈出的字母，VLM需要指出被圈出的是哪个字母。
 一共是 52 * 3 * 2 = 312 张图片，对应 624 条问答。文章使用了3个英语单词，3 种红圈粗细、2 种字体，再将3个单词中的15、17和20个字母分别挨个圈出来得到。（同样，正文对此部分数据量的说明数字有误。）</p>
-<figure><img alt="BlindTest 配图 10" decoding="async" height="1008" loading="lazy" src="/assets/blindtest/figure-10.png" width="2908"/></figure>
+<figure><h4 class="fig-title">被圆圈标记的字母</h4><a class="article-image image-preview--wide" style="--image-width:2908px;--image-ratio:2.884920635" href="/assets/blindtest/figure-10.png" data-image-viewer data-pswp-width="2908" data-pswp-height="1008" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 10"><img alt="BlindTest 配图 10" decoding="async" height="1008" loading="lazy" src="/assets/blindtest/figure-10.png" width="2908"/></a><figcaption>红圈在每个单词或字符串中标出目标字母。</figcaption></figure>
 <p>对于熟悉的单词，模型更容易辨别出正确的字母。可见在 Acknowledgement 上面，除了GPT，其他模型的表现都要更好。</p>
-<figure><img alt="BlindTest 配图 11" decoding="async" height="430" loading="lazy" src="/assets/blindtest/figure-11.png" width="1368"/></figure>
+<figure><h4 class="fig-title">较长的字母串</h4><a class="article-image image-preview--wide" style="--image-width:1368px;--image-ratio:3.181395349" href="/assets/blindtest/figure-11.png" data-image-viewer data-pswp-width="1368" data-pswp-height="430" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 11"><img alt="BlindTest 配图 11" decoding="async" height="430" loading="lazy" src="/assets/blindtest/figure-11.png" width="1368"/></a><figcaption>表格列出各模型在不同字符串上的准确率。</figcaption></figure>
 <p>同时，对于较短、没有重复字母的单词，模型的表现明显更好。可能是预训练数据集中大量出现过这些单词的原因？</p>
-<figure><img alt="BlindTest 配图 12" decoding="async" height="384" loading="lazy" src="/assets/blindtest/figure-12.png" width="832"/></figure>
+<figure><h4 class="fig-title">简短的常见单词</h4><a class="article-image image-preview--result" style="--image-width:832px;--image-ratio:2.166666667" href="/assets/blindtest/figure-12.png" data-image-viewer data-pswp-width="832" data-pswp-height="384" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 12"><img alt="BlindTest 配图 12" decoding="async" height="384" loading="lazy" src="/assets/blindtest/figure-12.png" width="832"/></a><figcaption>表格分别汇报各单词的识别准确率。</figcaption></figure>
 <h3>Task 4 辨别奥运五环数量</h3>
 <p>对于类似 Olympic Logo、由多个圆圈相互交叠组成的图像，VLM需要指出里面图形的数量。
 一共是 480 张图片，960个问答，对应不同图片尺寸，不同图像个数，不同半径，不同粗细，不同颜色。此外，还通过翻转和用五边形替代圆形的设置来生成图像。</p>
-<figure><img alt="BlindTest 配图 13" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-13.png" width="2908"/></figure>
+<figure><h4 class="fig-title">相交圆环计数</h4><a class="article-image image-preview--montage" style="--image-width:2908px;--image-ratio:1.000000000" href="/assets/blindtest/figure-13.png" data-image-viewer data-pswp-width="2908" data-pswp-height="2908" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 13"><img alt="BlindTest 配图 13" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-13.png" width="2908"/></a><figcaption>样例改变图形的数量、排列、线宽和颜色。</figcaption></figure>
 <p>下面是对分辨率、颜色和 GT 数量的消融结果。文章中认为分辨率和颜色对模型的影响不大，但是我看3.5在384分辨率下有个明显的骤降，这和我之前观察到的现象是一致的：同样内容的图像，分辨率改变的时候会有断崖，而且是不平滑的，例如200分辨率下，效果可能比100和300都要差得多。</p>
 <p>对于形状和格式，VLM表现更加极端：可以看到5圆的经典组合，VLM表现非常好；而其他的形状 + 数量的组合就参差不齐，这明显是一种VLM 的 bias 现象（难怪作者后面新写了一篇bias 相关的文章）。</p>
-<figure><img alt="BlindTest 配图 14" decoding="async" height="1134" loading="lazy" src="/assets/blindtest/figure-14.png" width="1410"/></figure>
+<figure><h4 class="fig-title">圆形与五边形计数</h4><a class="article-image image-preview--result" style="--image-width:1410px;--image-ratio:1.243386243" href="/assets/blindtest/figure-14.png" data-image-viewer data-pswp-width="1410" data-pswp-height="1134" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 14"><img alt="BlindTest 配图 14" decoding="async" height="1134" loading="lazy" src="/assets/blindtest/figure-14.png" width="1410"/></a><figcaption>各图比较分辨率、颜色及图形数量对准确率的影响。</figcaption></figure>
 <p>下面这张图就展示得更加明显了：Gemini 有非常严重的bias，它对于圆环的数量会一直猜测是5；而对于五边形的数量就近似于随机猜测。其余 3 个模型也表现出了明显的偏好：在GT为5个圆环时，都倾向于猜测是5；而对于5个五边形的情况则各有不同的倾向。</p>
-<figure><img alt="BlindTest 配图 15" decoding="async" height="1032" loading="lazy" src="/assets/blindtest/figure-15.png" width="1446"/></figure>
+<figure><h4 class="fig-title">预测数量与实际数量</h4><a class="article-image image-preview--result" style="--image-width:1446px;--image-ratio:1.401162791" href="/assets/blindtest/figure-15.png" data-image-viewer data-pswp-width="1446" data-pswp-height="1032" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 15"><img alt="BlindTest 配图 15" decoding="async" height="1032" loading="lazy" src="/assets/blindtest/figure-15.png" width="1446"/></a><figcaption>每幅图将一个模型的回答与真实图形数量对照。</figcaption></figure>
 <h3>Task 5 辨别嵌套方形数量</h3>
 <p>VLM 需要输出嵌套图形中正方形的数量。
 一共是 120张图片，240个问答，变量分别是正方形数量、线条粗细和图形的位置。</p>
-<figure><img alt="BlindTest 配图 16" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-16.png" width="2908"/></figure>
+<figure><h4 class="fig-title">嵌套正方形</h4><a class="article-image image-preview--montage" style="--image-width:2908px;--image-ratio:1.000000000" href="/assets/blindtest/figure-16.png" data-image-viewer data-pswp-width="2908" data-pswp-height="2908" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 16"><img alt="BlindTest 配图 16" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-16.png" width="2908"/></a><figcaption>样例改变正方形的数量、位置与线宽。</figcaption></figure>
 <p>对线条粗细的消融。结果表明影响不显著。</p>
-<figure><img alt="BlindTest 配图 17" decoding="async" height="354" loading="lazy" src="/assets/blindtest/figure-17.png" width="720"/></figure>
+<figure><h4 class="fig-title">嵌套正方形的线宽消融</h4><a class="article-image image-preview--result" style="--image-width:720px;--image-ratio:2.033898305" href="/assets/blindtest/figure-17.png" data-image-viewer data-pswp-width="720" data-pswp-height="354" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 17"><img alt="BlindTest 配图 17" decoding="async" height="354" loading="lazy" src="/assets/blindtest/figure-17.png" width="720"/></a><figcaption>表格各行对应一种线宽的准确率。</figcaption></figure>
 <h3>Task 6 数方格行数和列数</h3>
 <p>VLM 要数出网格状图像中的行数和列数。
 一共是264 张图片，528个问答。变量为行数，列数，线条粗细，图像尺寸，以及格子内部是否有文字。</p>
-<figure><img alt="BlindTest 配图 18" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-18.png" width="2908"/></figure>
+<figure><h4 class="fig-title">网格行列计数</h4><a class="article-image image-preview--montage" style="--image-width:2908px;--image-ratio:1.000000000" href="/assets/blindtest/figure-18.png" data-image-viewer data-pswp-width="2908" data-pswp-height="2908" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 18"><img alt="BlindTest 配图 18" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-18.png" width="2908"/></a><figcaption>网格大小不一，单元格可以为空或包含文字。</figcaption></figure>
 <p>在方格里填上文字则会显著提高模型的性能。这可能和tokenizer 有关？</p>
-<figure><img alt="BlindTest 配图 19" decoding="async" height="262" loading="lazy" src="/assets/blindtest/figure-19.png" width="732"/></figure>
+<figure><h4 class="fig-title">空网格与含文字网格</h4><a class="article-image image-preview--result" style="--image-width:732px;--image-ratio:2.793893130" href="/assets/blindtest/figure-19.png" data-image-viewer data-pswp-width="732" data-pswp-height="262" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 19"><img alt="BlindTest 配图 19" decoding="async" height="262" loading="lazy" src="/assets/blindtest/figure-19.png" width="732"/></a><figcaption>表格按网格内容比较计数准确率。</figcaption></figure>
 <h3>Task 7 A 点到 B 点的路线数量</h3>
 <p>VLM需要在一个模拟地铁线路图中，找到A到B的路径数量。
 一共是180张图片，720个问答。图像依旧是完全合成出来的，是从一个网格中，随机选取节点作为线路图的拐点，同时将 A、B、C、D 四个点作为位置固定的模拟站点，再按照不同的可行线路数量和图像尺寸来生成。</p>
-<figure><img alt="BlindTest 配图 20" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-20.png" width="2908"/></figure>
+<figure><h4 class="fig-title">站点之间的路径</h4><a class="article-image image-preview--montage" style="--image-width:2908px;--image-ratio:1.000000000" href="/assets/blindtest/figure-20.png" data-image-viewer data-pswp-width="2908" data-pswp-height="2908" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 20"><img alt="BlindTest 配图 20" decoding="async" height="2908" loading="lazy" src="/assets/blindtest/figure-20.png" width="2908"/></a><figcaption>合成地图包含数量不同的从 A 到 B 的路径。</figcaption></figure>
 <p>结果显示路线越多时，大模型表现越差。这个也符合直觉。</p>
-<figure><img alt="BlindTest 配图 21" decoding="async" height="742" loading="lazy" src="/assets/blindtest/figure-21.png" width="732"/></figure>
+<figure><h4 class="fig-title">路径计数准确率</h4><a class="article-image image-preview--tall" style="--image-width:732px;--image-ratio:0.986522911" href="/assets/blindtest/figure-21.png" data-image-viewer data-pswp-width="732" data-pswp-height="742" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 21"><img alt="BlindTest 配图 21" decoding="async" height="742" loading="lazy" src="/assets/blindtest/figure-21.png" width="732"/></a><figcaption>热图按实际路径数量汇总准确率。</figcaption></figure>
 <h2>3 其他相关发现</h2>
 <p>还有很多其他相关发现，例如</p>
 <h3>思维链对这种低层感知任务帮助甚微。</h3>
-<figure><img alt="BlindTest 配图 22" decoding="async" height="336" loading="lazy" src="/assets/blindtest/figure-22.png" width="1754"/></figure>
+<figure><h4 class="fig-title">低层视觉感知与推理</h4><a class="article-image image-preview--wide" style="--image-width:1754px;--image-ratio:5.220238095" href="/assets/blindtest/figure-22.png" data-image-viewer data-pswp-width="1754" data-pswp-height="336" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 22"><img alt="BlindTest 配图 22" decoding="async" height="336" loading="lazy" src="/assets/blindtest/figure-22.png" width="1754"/></a><figcaption>表格比较带显式推理和普通模型在各任务上的表现。</figcaption></figure>
 <h3>尝试让VLM 用图形语言重建图像。</h3>
 <p>参考已有的，让VLM重建图像的工作 <a href="https://arxiv.org/abs/2408.03940">Pixel Value Prediction: How Well Can Vision Language Models See Image Details?</a></p>
 <p>下图为让 Sonnet 3.5 使用 SVG、HTML、JS、Python 等方式来重建图像的结果。可以看到重建得一塌糊涂，很多关键特征都被丢失了。</p>
-<figure><img alt="BlindTest 配图 23" decoding="async" height="1260" loading="lazy" src="/assets/blindtest/figure-23.png" width="1406"/></figure>
+<figure><h4 class="fig-title">用图形语言重建输入</h4><a class="article-image image-preview--tall" style="--image-width:1406px;--image-ratio:1.115873016" href="/assets/blindtest/figure-23.png" data-image-viewer data-pswp-width="1406" data-pswp-height="1260" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 23"><img alt="BlindTest 配图 23" decoding="async" height="1260" loading="lazy" src="/assets/blindtest/figure-23.png" width="1406"/></a><figcaption>Sonnet 3.5 使用 SVG、HTML 和 JavaScript 或 Python 重建原图。</figcaption></figure>
 <h3>尝试通过训练来提高模型的性能</h3>
 <p>fine-tuning Bunny：作者尝试在 Bunny 上，对“两个圆是否相交”进行微调，但是结果非常差。从下面的图片可以观察到，在距离为正时，模型的准确率会出现断崖式的下降（从100% 到 0 %），训练数据集越大，现象越明显。这让人猜测是不是模型完全退化了，以至于只会输出“overlap” 作为答案。50K的时候就出现了这种退化现象，作者表示模型完全失去了回答能力，只会输出一个终止符，无法做出任何回答。
 PixelBench 也试图利用合成数据来提高模型性能但是失败了。这篇文章的失败显得更彻底一些：模型连 in-domain 的性能也没有得到显著提升。这也太奇怪了，为什么会这样？</p>
-<figure><img alt="BlindTest 配图 24" decoding="async" height="1524" loading="lazy" src="/assets/blindtest/figure-24.png" width="1388"/></figure>
+<figure><h4 class="fig-title">使用合成圆形样例进行微调</h4><a class="article-image image-preview--tall" style="--image-width:1388px;--image-ratio:0.910761155" href="/assets/blindtest/figure-24.png" data-image-viewer data-pswp-width="1388" data-pswp-height="1524" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 24"><img alt="BlindTest 配图 24" decoding="async" height="1524" loading="lazy" src="/assets/blindtest/figure-24.png" width="1388"/></a><figcaption>热图对比用不同数量样本训练后的回答。</figcaption></figure>
 <h3>尝试在简化的问题上测试模型</h3>
 <p>例如在字母辨别实验上，扩大单词中相邻字母之间的间距。成功率会随着距离变大而提高。这也是符合直觉的。作者在第六节 vision encoder 中提到这点，认为这是“问题并不OOD”的一个证据：当问题设置比较简单的时候，即使图片依旧是合成的OOD的图片，模型也能够答对。说明模型的失败并不是这种不常见的问题形式导致的。</p>
-<figure><img alt="BlindTest 配图 25" decoding="async" height="706" loading="lazy" src="/assets/blindtest/figure-25.png" width="532"/></figure>
+<figure><h4 class="fig-title">圈中字母与邻近字母的间距</h4><a class="article-image image-preview--tall" style="--image-width:532px;--image-ratio:0.753541076" href="/assets/blindtest/figure-25.png" data-image-viewer data-pswp-width="532" data-pswp-height="706" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 25"><img alt="BlindTest 配图 25" decoding="async" height="706" loading="lazy" src="/assets/blindtest/figure-25.png" width="532"/></a><figcaption>逐步增加相邻字母间距，并按间距比较结果。</figcaption></figure>
 <h3>vision encoder 已经提供了足够的信息</h3>
 <p>这一节试图证明，模型表现不佳的原因，不是合成图像在训练集中罕见带来的 OOD 问题，也不是 prompt 不对或者线条颜色等问题，而是在较困难的设置下，例如字母间距或两圆间距较小时，模型缺乏将关键视觉信息转换为答案的能力。</p>
 <p>为了证明这一点，文章采用 SOTA 微型开源VLM 0.5B LLaVA-OneV-S 和 4.2B Phi-3.5 中的vision encoders  SigLIP  和 CLIP。在 1 圆圈相交  2 折线相交 两个任务下，生成了总共约两万条的数据。</p>
 <p>然后，将两个阶段的特征分别作为线性分类器的输入：1. 经过 Vision encoder、但尚未经过 Projection 的特征；2. 经过 Projection 的特征。</p>
-<figure><img alt="BlindTest 配图 26" decoding="async" height="1114" loading="lazy" src="/assets/blindtest/figure-26.png" width="868"/></figure>
+<figure><h4 class="fig-title">探测视觉编码器</h4><a class="article-image image-preview--tall" style="--image-width:868px;--image-ratio:0.779174147" href="/assets/blindtest/figure-26.png" data-image-viewer data-pswp-width="868" data-pswp-height="1114" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 26"><img alt="BlindTest 配图 26" decoding="async" height="1114" loading="lazy" src="/assets/blindtest/figure-26.png" width="868"/></a><figcaption>线性分类器分别读取投影层前后的视觉特征。</figcaption></figure>
 <p>结果显示，线性分类器的准确率已经相当之高，证明经过 Vision Encoder 后，依旧保留了充足的视觉信息，能够完成需要的分类任务。</p>
-<figure><img alt="BlindTest 配图 27" decoding="async" height="368" loading="lazy" src="/assets/blindtest/figure-27.png" width="1008"/></figure>
+<figure><h4 class="fig-title">线性探针与完整模型的准确率</h4><a class="article-image image-preview--wide" style="--image-width:1008px;--image-ratio:2.739130435" href="/assets/blindtest/figure-27.png" data-image-viewer data-pswp-width="1008" data-pswp-height="368" aria-haspopup="dialog" aria-label="放大图片：BlindTest 配图 27"><img alt="BlindTest 配图 27" decoding="async" height="368" loading="lazy" src="/assets/blindtest/figure-27.png" width="1008"/></a><figcaption>表格比较投影前后的线性分类结果与完整模型的回答。</figcaption></figure>
 <h2>总结以及后续</h2>
 <h3>近期模型的公开成绩</h3>
 <p>看了下比较新的模型成绩，至少 Qwen 3.6-27B  都已经接近饱和了，分数在 90 往上。也许Qwen 3.8 或者 Qwen 4 -27B 能够拿到将近100 的分数？到时候测试一下。BTW, Opus 4.5 表现和 Sonnet 3.5 差不多，还挺让人意外的。</p>
@@ -202,3 +216,6 @@ PixelBench 也试图利用合成数据来提高模型性能但是失败了。这
 <a href="https://arxiv.org/abs/2610.21114">Spectral-Spatial Interpretation</a></p>
 
 </div>
+
+</div>
+```

@@ -1,3 +1,13 @@
-_site/
-__pycache__/
+/_site/
+/.quarto/
+/docs/
+/exports/
+/PUBLISHING.md
+/publishing-settings.json
+/scripts/
+/tools/
+/__pycache__/
+*.pyc
 .DS_Store
+
+**/*.quarto_ipynb

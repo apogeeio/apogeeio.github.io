@@ -1,0 +1,24 @@
+```{=html}
+<ul class="blog-list list">
+<% for (const [index, item] of items.entries()) { %>
+  <% const titleId = 'blog-card-title-' + (index + 1); %>
+  <li class="blog-card" <%= metadataAttrs(item) %>>
+    <a class="blog-card-link" href="<%- item.path %>" aria-labelledby="<%- titleId %>">
+      <div class="blog-figure">
+        <% if (item.image) { %>
+          <img src="<%- item.image %>" alt="" loading="lazy">
+        <% } else { %>
+          <div class="blog-figure-placeholder" aria-hidden="true">Apogee</div>
+        <% } %>
+      </div>
+      <div class="blog-copy">
+        <% if (item.date) { %>
+          <p class="blog-meta"><%= item.date %></p>
+        <% } %>
+        <h2 id="<%- titleId %>" class="blog-title no-anchor"><%= item.title %></h2>
+      </div>
+    </a>
+  </li>
+<% } %>
+</ul>
+```

@@ -1,10 +1,24 @@
+---
+title: "PixelBench: Can Large Models Make Fuse-Bead Art?"
+author: "Apogee"
+date: "2026-11-06"
+lang: en
+image: /assets/pixelbench/figure-01.png
+toc: false
+include-in-header:
+  - text: |
+      <link rel="stylesheet" href="/assets/article.css">
+---
+
+```{=html}
+<div class="post-body">
 <div class="pixelbench-body">
 <p>I recently came across an interesting paper from the Chinese University of Hong Kong, released on November 2: <a href="https://haoquanzhang.github.io/pixelbench/?lang=zh#fnref:zh-understanding-setup">Can LLMs understand and generate images pixel by pixel?</a></p>
 <p>The author also has a promotional post: <a href="https://www.xiaohongshu.com/user/profile/6325ef2a0000000023027921/6ae329970000000019003aa2">PixelBench: Can Large Models Make Fuse-Bead Art?</a></p>
 <p>Here is a brief walkthrough. For more detail, see the authors' blog and paper.</p>
 <section aria-label="TL;DR" class="tldr"><b>TL;DR</b><p>PixelBench introduces a benchmark that uses a palette and a grid of pixel indices to evaluate language models' ability to generate and understand pixel images through text. Astra stands out; other models perform less well and are more prone to degradation at higher resolutions. The authors also propose Pixel Reconstruction Tuning (PRT), which adds pixel reconstruction to visual instruction tuning. Adding 2,000 reconstruction examples to Molmo2-4B's 500,000 instruction examples improves the average visual-understanding evaluation score by about 0.5–0.6 points.</p></section>
 <hr/>
-<figure><img alt="PixelBench figure 1" decoding="async" height="948" src="/assets/pixelbench/figure-01.png" width="1606"/></figure>
+<figure><h4 class="fig-title">Pixel art from text</h4><a class="article-image image-preview--result" style="--image-width:1606px;--image-ratio:1.694092827" href="/assets/pixelbench/figure-01.png" data-image-viewer data-pswp-width="1606" data-pswp-height="948" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 1"><img alt="PixelBench figure 1" decoding="async" height="948" src="/assets/pixelbench/figure-01.png" width="1606"/></a><figcaption>The gallery shows model outputs at several resolutions. The example on the right pairs the text response with its rendered image.</figcaption></figure>
 <h2>1 How can a model represent and output an image?</h2>
 <p>The paper first considers how to let a language model such as GPT-6 generate images.</p>
 <p>A language model cannot directly output pixels as an image when its architecture and vocabulary remain unchanged: it can only produce text tokens. We can nevertheless achieve the goal through additional or indirect methods. For example, we can ask the model to output a domain-specific language such as SVG or CAD to describe the image, then render it. More generally, a model can use Python libraries to generate the image it wants to express. We can also take a pixel-level approach and ask it to output every pixel's RGB value. These representations differ in expressive power and suitable applications.</p>
@@ -13,7 +27,7 @@
 <h2>2 Pixels and a palette</h2>
 <p>The paper settles on constrained pixel art as the language model's output format. Repeating full RGB values for every pixel creates large amounts of repetitive text and substantially increases token costs. PixelBench uses a palette plus a two-dimensional index grid. It first outputs a palette of 2–8 opaque colors, followed by an S × S index grid. The palette uses <code>#RRGGBB</code> values, and each grid character, <code>0</code>–<code>7</code>, refers to one color. Both parts are expressed in JSON and rendered as an image.</p>
 <p>The output is pure text, with no tool calls or agent framework. This is a test of the model on its own.</p>
-<figure><img alt="PixelBench figure 2" decoding="async" height="672" loading="lazy" src="/assets/pixelbench/figure-02.png" width="1650"/></figure>
+<figure><h4 class="fig-title">Palette-indexed pixels</h4><a class="article-image image-preview--result" style="--image-width:1650px;--image-ratio:2.455357143" href="/assets/pixelbench/figure-02.png" data-image-viewer data-pswp-width="1650" data-pswp-height="672" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 2"><img alt="PixelBench figure 2" decoding="async" height="672" loading="lazy" src="/assets/pixelbench/figure-02.png" width="1650"/></a><figcaption>Each index in the grid selects a color from the palette.</figcaption></figure>
 <h2>3 What can the models draw?</h2>
 <p>The paper begins with two generation tasks: Text-to-Pixel and Image-to-Pixel.</p>
 <h3>Text-to-Pixel (T2P)</h3>
@@ -55,26 +69,26 @@
 </tbody>
 </table></div>
 <p>The results are visually immediate. GPT models do well, especially Astra's 16 × 16 output, which preserves the main features and subject well enough to resemble a pixel-game icon. Opus also does fairly well. The others are much less impressive: their handling of shape is abstract and distorted enough to be hard to look at. (Gemini and the Chinese models perform particularly poorly. Why? Would letting a model inspect its rendered output and revise it improve the result?)</p>
-<figure><img alt="PixelBench figure 3" decoding="async" height="1298" loading="lazy" src="/assets/pixelbench/figure-03.png" width="1802"/></figure>
-<figure><img alt="PixelBench figure 4" decoding="async" height="1272" loading="lazy" src="/assets/pixelbench/figure-04.png" width="1800"/></figure>
-<figure><img alt="PixelBench figure 5" decoding="async" height="884" loading="lazy" src="/assets/pixelbench/figure-05.png" width="1660"/></figure>
+<figure><h4 class="fig-title">Text-to-pixel generation · Turtle</h4><a class="article-image image-preview--montage" style="--image-width:1802px;--image-ratio:1.388289676" href="/assets/pixelbench/figure-03.png" data-image-viewer data-pswp-width="1802" data-pswp-height="1298" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 3"><img alt="PixelBench figure 3" decoding="async" height="1298" loading="lazy" src="/assets/pixelbench/figure-03.png" width="1802"/></a><figcaption>Seven models render the same prompt at three resolutions.</figcaption></figure>
+<figure><h4 class="fig-title">Text-to-pixel generation · Lightning bolt</h4><a class="article-image image-preview--montage" style="--image-width:1800px;--image-ratio:1.415094340" href="/assets/pixelbench/figure-04.png" data-image-viewer data-pswp-width="1800" data-pswp-height="1272" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 4"><img alt="PixelBench figure 4" decoding="async" height="1272" loading="lazy" src="/assets/pixelbench/figure-04.png" width="1800"/></a><figcaption>The shared prompt makes it possible to compare how each model handles the same shape and diagonal edges.</figcaption></figure>
+<figure><h4 class="fig-title">Text and image prompts</h4><a class="article-image image-preview--result" style="--image-width:1660px;--image-ratio:1.877828054" href="/assets/pixelbench/figure-05.png" data-image-viewer data-pswp-width="1660" data-pswp-height="884" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 5"><img alt="PixelBench figure 5" decoding="async" height="884" loading="lazy" src="/assets/pixelbench/figure-05.png" width="1660"/></a><figcaption>Text-to-pixel examples are on the left. Image-to-pixel examples and the reference images are on the right.</figcaption></figure>
 <h3>Image-to-Pixel (I2P)</h3>
 <p>Here the model performs a low-resolution reconstruction task, evaluated through reconstruction losses. Given a reference image, it must output a reconstructed pixel image preserving the subject, pose, composition, and related information. Several traditional methods perform the same task as baselines. Evaluation reports reference-image retrieval accuracy, SigLIP similarity, and DINO similarity.</p>
 <p>The paper selects one image from each of 100 ImageNet-1K classes. Traditional methods are at least excellent at downsampling: they compress information evenly, in a way that matches intuition. Models show a more semantic inclination. For instance, they often render sky and ground as uniform colors rather than the layered colors produced by traditional methods. (Could this also come from the restricted palette size?) They tend to draw the dog's distinctive features: the GPT example below attempts to preserve the white patches on its chest and tail, along with a recognizable head, tail, and legs, producing something closer to pixel art. The two approaches allocate their limited pixels differently. This is also expected: large models tend to emphasize semantic and conceptual features.</p>
 <p>The ranking is consistent with T2P: GPT models are generally strong, especially Astra; Opus is acceptable; the others generally perform poorly.</p>
 <p>(The same question applies: what happens if the model can retry after seeing the rendered image?)</p>
-<figure><img alt="PixelBench figure 6" decoding="async" height="1426" loading="lazy" src="/assets/pixelbench/figure-06.png" width="1782"/></figure>
+<figure><h4 class="fig-title">Image-to-pixel generation</h4><a class="article-image image-preview--montage" style="--image-width:1782px;--image-ratio:1.249649369" href="/assets/pixelbench/figure-06.png" data-image-viewer data-pswp-width="1782" data-pswp-height="1426" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 6"><img alt="PixelBench figure 6" decoding="async" height="1426" loading="lazy" src="/assets/pixelbench/figure-06.png" width="1782"/></a><figcaption>Model outputs appear alongside the source image for comparison across resolutions.</figcaption></figure>
 <p>To me, both tests are fundamentally about information. How does information move between text and images? This transformation usually involves information loss, but how much? How should we measure and define it? Can models perform this transformation and compression well?</p>
 <h2>4 Scaling the canvas</h2>
 <p>A natural next question follows from all the simplifications above. We have restricted the number of colors and output size. What happens if we provide a larger canvas? (More radically, what if we allow the full RGB color space and match the output resolution to the reference image? Such a large output would exceed context-length limits.)</p>
 <p>The paper tests several configurations. With a fixed set of 50 concepts and 50 reference images, Astra, Sol, Opus, and Gemini generate outputs at ten side lengths: 16, 24, 32, 40, 48, 64, 80, 96, 112, and 128. The results remain interesting: only Astra holds up, while all the others degrade. (Is this a long-context effect? Tens of thousands of tokens do not seem especially long.)</p>
 <p>GPT-5.6 Sol and Claude Opus 5 both show some degradation, with higher resolution failing to bring more detail. Gemini deteriorates more severely, to the point of expressing little meaningful content.</p>
 <p>(Astra's advantage is striking here. What does it mean? Did OpenAI deliberately train on something similar, or does the ability emerge naturally?)</p>
-<figure><img alt="PixelBench figure 7" decoding="async" height="1598" loading="lazy" src="/assets/pixelbench/figure-07.png" width="1864"/></figure>
+<figure><h4 class="fig-title">Scaling up pixel grids</h4><a class="article-image image-preview--montage" style="--image-width:1864px;--image-ratio:1.166458073" href="/assets/pixelbench/figure-07.png" data-image-viewer data-pswp-width="1864" data-pswp-height="1598" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 7"><img alt="PixelBench figure 7" decoding="async" height="1598" loading="lazy" src="/assets/pixelbench/figure-07.png" width="1864"/></a><figcaption>The plots summarize performance as grid size increases. The montage shows reconstructions of the source image.</figcaption></figure>
 <h2>5 If a model can draw it, can it read it?</h2>
 <p>Give a model a palette and index grid and ask it to select the depicted concept from ten candidates. Can it recognize what the image contains? (This is a textual encoding. What happens if we instead provide the rendered image? Would the correlation between reading and writing abilities persist?)</p>
 <p>The inputs are pixel images generated by Astra and PIA-reduced, which language models then classify. Each source contributes 100 questions at each of three resolutions, for 600 ten-way multiple-choice questions in total. Models receive only palette and grid text. The results match expectations: across the tested models, understanding scores have Pearson correlations of 0.871 with T2P and 0.930 with I2P, both strong correlations.</p>
-<figure><img alt="PixelBench figure 8" decoding="async" height="930" loading="lazy" src="/assets/pixelbench/figure-08.png" width="1336"/></figure>
+<figure><h4 class="fig-title">Understanding palette-indexed art</h4><a class="article-image image-preview--result" style="--image-width:1336px;--image-ratio:1.436559140" href="/assets/pixelbench/figure-08.png" data-image-viewer data-pswp-width="1336" data-pswp-height="930" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 8"><img alt="PixelBench figure 8" decoding="async" height="930" loading="lazy" src="/assets/pixelbench/figure-08.png" width="1336"/></a><figcaption>The two panels report classification accuracy on PIA-reduced and Astra-generated grids.</figcaption></figure>
 <h2>6 Training visual understanding through pixel reconstruction</h2>
 <p>The paper proposes Pixel Reconstruction Tuning (PRT), a post-training method that uses pixel reconstruction as auxiliary supervision. The authors select a subset of PixMo-Cap, create reconstructed images with PIA-reduced, and retain only results with high SigLIP2 similarity. They then use Gemini 3.8 Flash to generate image descriptions and palette explanations.</p>
 <p>(Why use Gemini 3.8 Flash here? Why did it not take part in the earlier evaluation? Are its descriptions reliable?)</p>
@@ -101,7 +115,7 @@ Layout: &lt;Spatial layout of the main color regions&gt;
 </code></pre>
 <p>I wanted to inspect a few concrete training examples but could not find them. Perhaps I could ask the authors for some.</p>
 <p>The experiment starts post-training from a pretrained Molmo2-4B checkpoint. The control group uses 500,000 LLaVA-OneVision-1.5 instruction examples; the experimental group adds 2,000 PRT examples. Both train all modules for one pass through the data, with the following results:</p>
-<figure><img alt="PixelBench figure 9" decoding="async" height="738" loading="lazy" src="/assets/pixelbench/figure-09.png" width="1794"/></figure>
+<figure><h4 class="fig-title">Pixel Reconstruction Tuning on Molmo2</h4><a class="article-image image-preview--wide" style="--image-width:1794px;--image-ratio:2.430894309" href="/assets/pixelbench/figure-09.png" data-image-viewer data-pswp-width="1794" data-pswp-height="738" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 9"><img alt="PixelBench figure 9" decoding="async" height="738" loading="lazy" src="/assets/pixelbench/figure-09.png" width="1794"/></a><figcaption>Bars report changes in evaluation score after adding pixel-reconstruction examples.</figcaption></figure>
 <p>(The improvement is not particularly large. Is the issue the test set, model, or training method? What would happen with Qwen 27B? Why use 500,000 instruction examples? Could we train directly on the 2,000 examples alone?)</p>
 <p>The paper also reports Qwen experiments with a similar setup. The control group post-trains Qwen3-VL-2B/4B/8B on FineVision, while the experimental group adds constructed PRT question–answer pairs as supervision. The target output is:</p>
 <pre><code class="language-json">{
@@ -114,7 +128,7 @@ Layout: &lt;Spatial layout of the main color regions&gt;
 }
 </code></pre>
 <p>The results below do show a positive signal, with improvements of varying sizes. Yet none of the settings improves by more than five points. Is scale the issue?</p>
-<figure><img alt="PixelBench figure 10" decoding="async" height="436" loading="lazy" src="/assets/pixelbench/figure-10.png" width="1600"/></figure>
+<figure><h4 class="fig-title">Target-resolution ablations</h4><a class="article-image image-preview--wide" style="--image-width:1600px;--image-ratio:3.669724771" href="/assets/pixelbench/figure-10.png" data-image-viewer data-pswp-width="1600" data-pswp-height="436" aria-haspopup="dialog" aria-label="Enlarge image: PixelBench figure 10"><img alt="PixelBench figure 10" decoding="async" height="436" loading="lazy" src="/assets/pixelbench/figure-10.png" width="1600"/></a><figcaption>The tables compare training targets and evaluation gains by resolution.</figcaption></figure>
 <h2>7 Open questions</h2>
 <p>For training-set size, the paper reports scaling from 1,000 to 8,000 examples without a significant further improvement. This is puzzling: why does more data fail to help substantially? Where is the problem?</p>
 <div class="table-wrap"><table class="results">
@@ -174,3 +188,6 @@ Layout: &lt;Spatial layout of the main color regions&gt;
 <p><a href="https://arxiv.org/abs/2304.07193">DINOv2: Learning Robust Visual Features without Supervision</a></p>
 
 </div>
+
+</div>
+```

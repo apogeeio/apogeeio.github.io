@@ -1,0 +1,302 @@
+.pe-viz {
+  max-width: 760px;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.pe-viz :is(button, input) {
+  font: inherit;
+  font-variant-numeric: inherit;
+}
+
+.pe-viz button:focus-visible,
+.pe-viz input:focus-visible,
+.pe-chart svg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.pe-formula {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0 0.26em;
+  color: var(--ink);
+  font: 25px/1.45 "Times New Roman", "Noto Serif", Georgia, serif;
+}
+
+.pe-formula > span {
+  white-space: nowrap;
+}
+
+.pe-formula sup,
+.pe-formula sub {
+  font-size: 0.69em;
+}
+
+.pe-formula .pe-fraction {
+  display: inline-grid;
+  grid-template-rows: auto auto;
+  vertical-align: middle;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.pe-fraction > span:first-child {
+  padding: 0 0.18em 0.06em;
+  border-bottom: 1px solid var(--ink-3);
+}
+
+.pe-fraction > span:last-child {
+  padding-top: 0.06em;
+}
+
+.pe-formula button {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dashed transparent;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pe-formula button:is(:hover, [aria-pressed="true"]) {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+.pe-viz .pe-say {
+  min-height: 1.55em;
+  margin: 10px 0 22px;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.pe-say strong {
+  color: var(--ink);
+}
+
+.pe-controls {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 17px;
+  color: var(--ink-3);
+  font-size: 14px;
+}
+
+.pe-range {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.pe-range input {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.pe-range output {
+  min-width: 5ch;
+  color: var(--ink);
+  font-weight: 600;
+  text-align: right;
+}
+
+.pe-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.pe-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-self: start;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 50px;
+  background: var(--paper-3);
+  padding: 3px;
+}
+
+.pe-pills button {
+  padding: 3px 12px;
+  border: 0;
+  border-radius: 50px;
+  background: transparent;
+  color: var(--ink-2);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pe-pills button[aria-pressed="true"] {
+  background: var(--mint);
+  color: var(--mint-ink);
+  font-weight: 600;
+}
+
+.pe-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.pe-metrics > div {
+  border-top: 1px solid var(--rule);
+  padding-top: 8px;
+}
+
+.pe-metrics dt {
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.pe-metrics dd {
+  margin: 3px 0 0;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.pe-chart {
+  position: relative;
+}
+
+.pe-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.pe-chart .pe-grid {
+  stroke: var(--rule-2);
+}
+
+.pe-chart .pe-axis {
+  stroke: var(--rule);
+}
+
+.pe-chart :is(line, path, circle, rect) {
+  vector-effect: non-scaling-stroke;
+}
+
+.pe-chart text {
+  fill: var(--ink-3);
+  font: 12px var(--reading-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.pe-chart :is(.pe-axis-title, .pe-svg-title) {
+  fill: var(--ink-2);
+}
+
+.pe-chart .pe-svg-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pe-chart .pe-crosshair {
+  stroke: var(--ink-3);
+  stroke-dasharray: 3 4;
+}
+
+.pe-chart .pe-series-label {
+  font-weight: 600;
+}
+
+.pe-chart .pe-reference {
+  stroke: var(--ink-3);
+  stroke-dasharray: 4 4;
+}
+
+.pe-svg-interactive {
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.pe-tooltip {
+  position: absolute;
+  z-index: 2;
+  width: max-content;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--rule-2);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: 0 6px 18px rgba(32, 33, 36, 0.14);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+.quarto-dark .pe-tooltip {
+  background: var(--paper-2);
+  border-color: var(--rule);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.38);
+}
+
+.pe-tooltip strong {
+  color: var(--ink);
+}
+
+.pe-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  padding-top: 8px;
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.pe-legend:empty {
+  display: none;
+}
+
+.pe-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pe-legend i {
+  display: inline-block;
+  width: 14px;
+  border-top: 2px solid var(--swatch);
+}
+
+.pe-legend .is-dashed {
+  border-top-style: dashed;
+}
+
+@media (max-width: 600px) {
+  .pe-formula { font-size: 19px; }
+  .pe-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pe-chart text { font-size: 24px; }
+  .pe-chart .pe-svg-title { font-size: 27px; }
+  .pe-pills button { padding-inline: 9px; }
+  .pe-pills.pe-head-pills {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-radius: 16px;
+  }
+}
