@@ -308,8 +308,12 @@ main.content .post-body .exp-head h3 {
   font-size: 20px;
 }
 
-main.content :is(p, blockquote, li) {
+main.content:has(:is(.pe-viz, .post-body)) :is(p, blockquote) {
   font-family: inherit;
+}
+
+main.content:not(:has(:is(.pe-viz, .post-body))) :is(li, blockquote) {
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
 main.content :not(pre) > code {
