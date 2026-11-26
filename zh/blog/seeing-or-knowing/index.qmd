@@ -142,13 +142,6 @@ $$
 
 这篇文章本身是遵从已有方法，在 MLLM 和 bias 场景进行的新实践。文章当中提到的 MetaQueries、activation patching、DAS + **Static Steering** 的方法都深入了网络内部，提供了深入的分析和归因视角，而不仅仅是看 benchmark 上面的端到端结果。不过比较侧重于语义和 bias 的语境，我所关心的感知方面没有什么分析。
 
-## Related Work
-
-- **视觉表征被忽视的现象**：**Hidden in Plain Sight**[^hidden-in-plain-sight]
-- **像素嵌入替代视觉编码器**：**Tuna-2**[^tuna2]
-- **基于表征自编码器的扩散 Transformer**：**RAE**[^rae]
-- **指令微调统一多模态理解与生成**：**MetaMorph**[^metamorph]
-
 [^seeing-or-knowing]: [Seeing or Knowing? Visual Context Sensitivity in Multimodal Large Language Models](https://www.alphaxiv.org/pdf/2607.26326)
 [^ccs]: [Controllable Context Sensitivity and the Knob Behind It](https://www.alphaxiv.org/abs/2411.07404)
 [^ews]: [Eyes Wide Shut? Exploring the Visual Shortcomings of Multimodal LLMs](https://www.alphaxiv.org/abs/2401.06209)
@@ -158,7 +151,3 @@ $$
 [^unilip]: [UniLiP: Adapting CLIP for Unified Multimodal Understanding, Generation and Editing](https://www.alphaxiv.org/abs/2507.23278)
 [^unipic2]: [Skywork UniPic 2.0: Building Kontext Model with Online RL for Unified Multimodal Model](https://www.alphaxiv.org/abs/2509.04548)
 [^ioi]: [Interpretability in the Wild: a Circuit for Indirect Object Identification in GPT-2 small](https://www.alphaxiv.org/abs/2211.00593)
-[^hidden-in-plain-sight]: [Hidden in plain sight: VLMs overlook their visual representations](https://www.alphaxiv.org/abs/2506.08008)
-[^tuna2]: [Tuna-2: Pixel Embeddings Beat Vision Encoders for Multimodal Understanding and Generation](https://www.alphaxiv.org/abs/2604.24763)
-[^rae]: [Diffusion Transformers with Representation Autoencoders](https://www.alphaxiv.org/abs/2510.11690)
-[^metamorph]: [MetaMorph: Multimodal Understanding and Generation via Instruction Tuning](https://www.alphaxiv.org/abs/2412.14164)

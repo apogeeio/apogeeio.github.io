@@ -308,7 +308,7 @@ main.content .post-body .exp-head h3 {
   font-size: 20px;
 }
 
-main.content:has(:is(.pe-viz, .post-body)) :is(p, blockquote) {
+main.content :is(p, blockquote, li) {
   font-family: inherit;
 }
 
