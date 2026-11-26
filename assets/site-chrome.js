@@ -39,11 +39,9 @@
       }
     }
 
-    // Globe language switcher targets
-    var langItems = document.querySelectorAll('.navbar-nav.ms-auto .dropdown-menu .dropdown-item');
-    if (langItems.length >= 2) {
-      var currentLanguage = langItems[isZh ? 1 : 0];
-      var otherLanguage = langItems[isZh ? 0 : 1];
+    // Clean single-click language toggle (replaces clunky dropdown)
+    var langLink = document.querySelector('.navbar-nav.ms-auto .nav-link');
+    if (langLink) {
       var bilingualSlugs = { 'wsp-1': true, 'pixelbench': true, 'blindtest': true, 'positional-encoding': true };
       var slugCandidate = segments[isZhPath ? 2 : 1] || '';
       var targetPage = 'index.html';
@@ -54,14 +52,14 @@
           targetPage = 'blog/index.html';
         }
       }
-      otherLanguage.setAttribute('href', offset + (isZh ? '' : 'zh/') + targetPage);
-      currentLanguage.setAttribute('href', window.location.href);
-      currentLanguage.setAttribute('aria-current', 'page');
-      currentLanguage.addEventListener('click', function (event) {
-        if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-          event.preventDefault();
-        }
-      });
+      var targetHref = offset + (isZh ? '' : 'zh/') + targetPage;
+      var langLabel = isZh ? 'EN' : '中文';
+      var langSpan = langLink.querySelector('.menu-text') || langLink;
+      langSpan.textContent = langLabel;
+      langLink.setAttribute('href', targetHref);
+      langLink.setAttribute('aria-label', isZh ? 'Switch to English' : '切换到中文');
+      langLink.title = isZh ? 'Switch to English' : '切换到中文';
+      langLink.classList.add('apogee-lang-toggle');
     }
 
     var article = document.querySelector('main#quarto-document-content');

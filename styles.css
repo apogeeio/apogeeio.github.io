@@ -308,6 +308,31 @@ main.content .post-body .exp-head h3 {
   font-size: 20px;
 }
 
+.navbar-nav.ms-auto .nav-link.apogee-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 11px !important;
+  margin-right: 10px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-family: var(--reading-font);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--ink-2) !important;
+  background: transparent;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.navbar-nav.ms-auto .nav-link.apogee-lang-toggle:hover {
+  border-color: var(--ink-3);
+  color: var(--ink) !important;
+  background: var(--surface-muted);
+}
+
 main.content:has(:is(.pe-viz, .post-body)) :is(p, blockquote) {
   font-family: inherit;
 }
