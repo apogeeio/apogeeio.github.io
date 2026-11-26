@@ -34,8 +34,7 @@ description: "哥本哈根大学论文 Seeing or Knowing? 笔记：用图像重�
 
 ## Introduction
 
-![](assets/fig1-conflict-modes.png)
-*图：图片上下文、语言上下文以及世界知识先验会相互冲突和干扰。*
+![图片上下文、语言上下文以及世界知识先验会相互冲突和干扰。](assets/fig1-conflict-modes.png)
 
 人们已经观察到，MLLM 出现了“过度依赖自身先验世界知识”的现象（即视觉语言模型存在固有偏见）。对此存在两种解释：
 
@@ -67,8 +66,7 @@ description: "哥本哈根大学论文 Seeing or Knowing? 笔记：用图像重�
 - **测试基准与模型**：`VLMs-are-Biased`、`Qwen2.5VL-3B`、`Qwen3.5-4B`、`Gemma-4-E2B-IT`；
 - **训练方式**：仅在 `ImageNet-1K` 上训练连接器与解码器。
 
-![](assets/fig2-reconstruction-arch.png)
-*图：采用的重建方法架构图*
+![采用的重建方法架构图](assets/fig2-reconstruction-arch.png)
 
 展开来讲：文章直接提取**冻结 MLLM（LLM backbone）最后一层（final layer）中对应图像位置的 256 个 image tokens**。不同于**原版 MetaQueries** 的做法，这篇论文不会使用 **learnable queries**，而是直接把最后一层的图片 tokens 拿来。
 图片输入 MLLM 时，带了一个固定的 **System Prompt**：
@@ -81,23 +79,20 @@ description: "哥本哈根大学论文 Seeing or Knowing? 笔记：用图像重�
 最后，直接送进一个图像生成头（image generation head），此处采用了 **`Sana-0.6B`**（线性扩散 Transformer）。
 训练过程中，MLLM 冻结，Connector 和 DiT 联合训练。在 **`ImageNet-1K`** 上训练，和反事实图片隔离。
 
-![](assets/fig3-reconstruction-samples.png)
-*图：如文章所说，低频的主体信息明显被保留了，而高频的细节信息则显著丢失，例如雪花形状、皮毛纹理、蜘蛛花纹等等。*
+![如文章所说，低频的主体信息明显被保留了，而高频的细节信息则显著丢失，例如雪花形状、皮毛纹理、蜘蛛花纹等等。](assets/fig3-reconstruction-samples.png)
 
 ## WhatIfVis 数据集与激活修补
 
 文章先做了一个数据集：构建了 **WhatIfVis** 基准，涵盖五类任务：**空间/时间**、**颜色**、**计数**、**大小**、**重量**，特地采用了反事实 Visual / Textual Context，构建起当前上下文与先验世界知识的冲突。
 
-![](assets/fig4-whatifvis-prompts.png)
-*图：视觉上下文、文字上下文，以及“遵从上下文”和“遵从先验”的指令设置。*
+![视觉上下文、文字上下文，以及“遵从上下文”和“遵从先验”的指令设置。](assets/fig4-whatifvis-prompts.png)
 
 接着在 WhatIfVis 的数据集上，文章进行了微调。唯一的训练集是 **`Spatial & Temporal`（1,136 条）**。然后在 `Color`、`Size`、`Count`、`Weight` 这四类上做测试，从而充分隔离训练集和测试集，测量方法的 OOD 表现。SFT（LoRA 微调）、Activation Patching 定位，以及后面训练 Steering 一维旋钮的实验，都是采用这样的配置。
 
 使用的指标为 PairAcc，要求同一条样本上，两种相反指令都需要遵循。且专门采用了 **`PairAcc_Prob`**，即不看回答字符串，直接比较 `context_answer` 和 `prior_answer` 哪个预测概率更高，从而避免模型因为微小用词差异而被判错的情况。（这种做法其实听起来也不太牢靠。为了避免这种用词的干扰，可以大模型裁判，或者干脆改成选择题让模型作答就好。比较预测概率给人一种讨巧的感觉）
 文章附录 Figure 9 也放出了直接用 **`PairAcc_EM`**，即按照“大模型输出字符串必须严格匹配答案”的指标。结果没有主图的漂亮。
 
-![](assets/fig5-lora-results.png)
-*图：LoRA 微调前后的实验结果。*
+![LoRA 微调前后的实验结果。](assets/fig5-lora-results.png)
 
 ## 通过激活修补定位关键层
 
@@ -115,8 +110,7 @@ description: "哥本哈根大学论文 Seeing or Knowing? 笔记：用图像重�
 
 这种做法的核心思想就是：希望找到神经网络前向推理过程中，对神经网络行为影响最关键的部分，我们只需要修复这一小部分的激活值就能修好神经网络的行为。
 
-![](assets/fig6-activation-patching.png)
-*图：对于两个模型，每个模型实验了两种修补方向。可见只需要修复中间段关键几层的激活值，影响就足以传递到下游，从而影响模型的行为。*
+![对于两个模型，每个模型实验了两种修补方向。可见只需要修复中间段关键几层的激活值，影响就足以传递到下游，从而影响模型的行为。](assets/fig6-activation-patching.png)
 
 ## 通过 Static Steering 调节模型行为
 
@@ -142,8 +136,7 @@ $$
 
 其中 $c(w)$ 是一个标量常数，文章只采用了两个档位：一个对应 **“只信图像”**，一个对应 **“只信先验”**。
 
-![](assets/fig7-steering-results.png)
-*图：实验结果。可见通过 Steering 的方式，不经过 SFT 就能够实现部分行为纠正的效果。*
+![实验结果。可见通过 Steering 的方式，不经过 SFT 就能够实现部分行为纠正的效果。](assets/fig7-steering-results.png)
 
 ## 总而言之
 
