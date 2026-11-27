@@ -1,7 +1,7 @@
 (function () {
   var scriptUrl = document.currentScript.src;
   var siteRoot = new URL('../', scriptUrl);
-  var knownBilingualSlugs = new Set(['wsp-1', 'pixelbench', 'blindtest', 'positional-encoding']);
+  var knownBilingualSlugs = new Set(['wsp-1', 'pixelbench', 'blindtest', 'positional-encoding', 'seeing-or-knowing']);
 
   function initSiteChrome() {
     var segments = window.location.pathname.slice(siteRoot.pathname.length).split('/');
@@ -88,12 +88,31 @@
       colorSwitch.title = '切换深色模式';
     }
 
-    // Sticky left-aligned stacked footer
+    // Article pageview counter (Busuanzi)
+    var isArticlePage = !document.body.classList.contains('page-home') && !document.body.classList.contains('page-blog');
+    if (isArticlePage && !document.getElementById('busuanzi_container_page_pv')) {
+      var titleHeader = document.getElementById('title-block-header');
+      if (titleHeader) {
+        var readingRow = document.createElement('div');
+        readingRow.className = 'article-reading-row';
+        var readingLabel = isZh ? '阅读' : 'Views';
+        readingRow.innerHTML =
+          '<span class="reading article-reading-count" id="busuanzi_container_page_pv" style="display:none">' +
+          '<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">' +
+          '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>' +
+          readingLabel + ' <span id="busuanzi_value_page_pv"></span></span>';
+        titleHeader.appendChild(readingRow);
+      }
+    }
+
+    // Sticky left-aligned stacked footer + site-wide visitor counters
     var navFooter = document.querySelector('.nav-footer');
     if (navFooter) {
       var copyText = isZh
         ? '© 2026 Apogee. 保留所有权利。'
         : '© 2026 Apogee. All rights reserved.';
+      var pvLabel = isZh ? '总访问量' : 'Total visits';
+      var uvLabel = isZh ? '访客数' : 'Visitors';
 
       navFooter.innerHTML =
         '<div class="site-footer-stack">' +
@@ -101,9 +120,26 @@
         '    <a href="https://github.com/apogeeio" target="_blank" rel="noopener">GITHUB</a>' +
         '  </div>' +
         '  <p class="site-footer-copy">' + copyText + '</p>' +
+        '  <div class="traffic site-footer-traffic">' +
+        '    <span id="busuanzi_container_site_pv" style="display:none">' + pvLabel + ' <span id="busuanzi_value_site_pv"></span></span>' +
+        '    <span id="busuanzi_container_site_uv" style="display:none">' + uvLabel + ' <span id="busuanzi_value_site_uv"></span></span>' +
+        '  </div>' +
         '</div>';
+    }
+
+    // Load Busuanzi after counter containers exist in DOM
+    if (!document.querySelector('script[data-busuanzi]')) {
+      var bsz = document.createElement('script');
+      bsz.src = 'https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+      bsz.async = true;
+      bsz.setAttribute('data-busuanzi', 'true');
+      document.head.appendChild(bsz);
     }
   }
 
-  initSiteChrome();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSiteChrome);
+  } else {
+    initSiteChrome();
+  }
 })();

@@ -64,4 +64,4 @@ format:
     html-math-method: katex
     include-in-header:
       - text: |
-          <script src="/assets/site-chrome.js?v=5" defer blocking="render"></script>
+          <script src="/assets/site-chrome.js?v=6" defer blocking="render"></script>

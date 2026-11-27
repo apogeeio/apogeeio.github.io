@@ -708,6 +708,38 @@ footer.footer {
   margin: 0;
 }
 
+.site-footer-traffic {
+  margin-top: 0.35rem;
+  font-family: var(--reading-font);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--apogee-footer-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.site-footer-traffic > span + span::before {
+  content: "·";
+  margin: 0 0.55rem;
+  opacity: 0.65;
+}
+
+#title-block-header .article-reading-row:has(#busuanzi_container_page_pv:not([style*="none"])) {
+  margin-top: 0.75rem;
+}
+
+#title-block-header .article-reading-count {
+  font-family: var(--reading-font);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+#title-block-header .article-reading-count svg {
+  vertical-align: -2.5px;
+  margin-right: 5px;
+}
+
 .site-footer-tools {
   display: flex;
   align-items: center;
