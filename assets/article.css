@@ -93,30 +93,28 @@ html:lang(zh) .post-appendix { line-height: 1.75; }
   .post-body .image-preview--montage { --preview-height: 320px; }
 }
 
-.quarto-dark .post-body {
-  --article-accent: var(--accent);
-  --article-accent-bg: var(--paper-2);
-  --article-accent-border: var(--rule);
+body.quarto-dark.article-page {
+  color: var(--ink-2);
 }
 
-.quarto-dark .post-body :is(a, .teaser-panel > b, .exp-num, .fig-setup summary, .trace summary) {
-  color: var(--article-accent);
+body.quarto-dark :is(.teaser-panel > b, .exp-num, .fig-setup summary) {
+  color: var(--accent);
 }
 
-.quarto-dark .post-body :is(.tldr, .teaser-panel, .results thead th, .trace, .block-takeaway, .figure-placeholder) {
-  background-color: var(--article-accent-bg);
-  border-color: var(--article-accent-border);
+body.quarto-dark :is(.post-title, .post-appendix, .citation-box, .setup-body, .block-takeaway, .figure-placeholder),
+body.quarto-dark .post-body .pixelbench-body pre {
+  background-color: var(--paper-2);
+  border-color: var(--rule);
 }
 
-.quarto-dark .post-body :is(h2, .setup-body, .results th, .results td) {
-  border-color: var(--article-accent-border);
+body.quarto-dark :is(.post-title h1, .citation-box) {
+  color: var(--ink);
 }
 
-.quarto-dark .post-body .pixelbench-body pre {
-  background-color: var(--apogee-panel-bg);
-  border-color: var(--apogee-panel-border);
+body.quarto-dark :is(.post-title .title-kicker, .post-byline .reading, .figure-placeholder, .post-body figcaption) {
+  color: var(--ink-3);
 }
 
-.quarto-dark .post-body :is(.figure-placeholder, figcaption) {
-  color: var(--apogee-muted);
+body.quarto-dark :is(.post-byline, .post-body h2) {
+  border-color: var(--rule);
 }

@@ -1,16 +1,17 @@
 (function () {
   var scriptUrl = document.currentScript.src;
+  var siteRoot = new URL('../', scriptUrl);
+  var knownBilingualSlugs = new Set(['wsp-1', 'pixelbench', 'blindtest', 'positional-encoding']);
 
   function initSiteChrome() {
-    var offsetMeta = document.querySelector('meta[name="quarto:offset"]');
-    var offset = offsetMeta ? offsetMeta.getAttribute('content') || '' : '';
-    var siteRoot = new URL(offset || '/', window.location.href).pathname;
-    var segments = window.location.pathname.slice(siteRoot.length).split('/');
+    var segments = window.location.pathname.slice(siteRoot.pathname.length).split('/');
     var htmlLang = document.documentElement.lang.toLowerCase().split('-')[0];
     var isZhPath = segments[0] === 'zh';
     var isZh = htmlLang ? htmlLang === 'zh' : isZhPath;
     var section = segments[isZhPath ? 1 : 0];
     var isBlogSection = section === 'blog' || section === 'posts';
+    var currentPrefix = isZh ? 'zh/' : '';
+    var counterpartPrefix = isZh ? '' : 'zh/';
 
     // Left navbar links: strictly 2 language-specific links
     var leftLinks = document.querySelectorAll('.navbar-nav.me-auto .nav-link');
@@ -22,10 +23,10 @@
       var blogSpan = blogLink.querySelector('.menu-text') || blogLink;
 
       homeSpan.textContent = isZh ? '主页' : 'Home';
-      homeLink.setAttribute('href', offset + (isZh ? 'zh/index.html' : 'index.html'));
+      homeLink.href = new URL(currentPrefix + 'index.html', siteRoot);
 
       blogSpan.textContent = 'Blog';
-      blogLink.setAttribute('href', offset + (isZh ? 'zh/blog/index.html' : 'blog/index.html'));
+      blogLink.href = new URL(currentPrefix + 'blog/index.html', siteRoot);
 
       homeLink.classList.toggle('active', !isBlogSection);
       blogLink.classList.toggle('active', isBlogSection);
@@ -39,27 +40,33 @@
       }
     }
 
-    // Clean single-click language toggle (replaces clunky dropdown)
     var langLink = document.querySelector('.navbar-nav.ms-auto .nav-link');
     if (langLink) {
-      var bilingualSlugs = { 'wsp-1': true, 'pixelbench': true, 'blindtest': true, 'positional-encoding': true };
-      var slugCandidate = segments[isZhPath ? 2 : 1] || '';
-      var targetPage = 'index.html';
-      if (isBlogSection) {
-        if (slugCandidate && slugCandidate !== 'index.html' && bilingualSlugs[slugCandidate]) {
-          targetPage = 'blog/' + slugCandidate + '/index.html';
-        } else {
-          targetPage = 'blog/index.html';
-        }
-      }
-      var targetHref = offset + (isZh ? '' : 'zh/') + targetPage;
+      var fallbackPage = isBlogSection ? 'blog/index.html' : 'index.html';
+      var fallbackUrl = new URL(counterpartPrefix + fallbackPage, siteRoot);
       var langLabel = isZh ? 'EN' : '中文';
+      var langTitle = isZh ? 'Switch to English' : '切换到中文';
       var langSpan = langLink.querySelector('.menu-text') || langLink;
       langSpan.textContent = langLabel;
-      langLink.setAttribute('href', targetHref);
-      langLink.setAttribute('aria-label', isZh ? 'Switch to English' : '切换到中文');
-      langLink.title = isZh ? 'Switch to English' : '切换到中文';
-      langLink.classList.add('apogee-lang-toggle');
+      langLink.href = fallbackUrl;
+      langLink.setAttribute('aria-label', langTitle);
+      langLink.title = langTitle;
+      langLink.lang = isZh ? 'en' : 'zh';
+      langLink.classList.remove('active');
+      langLink.removeAttribute('aria-current');
+
+      var slug = segments[isZhPath ? 2 : 1];
+      if (isBlogSection && slug && slug !== 'index.html') {
+        var counterpartUrl = new URL(counterpartPrefix + 'blog/' + slug + '/index.html', siteRoot);
+        if (knownBilingualSlugs.has(slug)) {
+          langLink.href = counterpartUrl;
+        }
+        fetch(counterpartUrl, { method: 'HEAD' }).then(function (response) {
+          langLink.href = response.ok && !response.redirected ? counterpartUrl : fallbackUrl;
+        }).catch(function () {
+          // Keep the initial destination when the network is unavailable.
+        });
+      }
     }
 
     var article = document.querySelector('main#quarto-document-content');
@@ -98,9 +105,5 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSiteChrome);
-  } else {
-    initSiteChrome();
-  }
+  initSiteChrome();
 })();

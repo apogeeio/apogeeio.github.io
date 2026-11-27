@@ -23,6 +23,7 @@
   --chart-brown: #8D6E63;
   --reading-width: 760px;
   --reading-font: system-ui, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --reading-serif: Georgia, Cambria, "Times New Roman", Times, "Songti SC", "STSong", "Noto Serif SC", serif;
 }
 
 body.quarto-dark {
@@ -119,25 +120,97 @@ a:hover {
   display: none;
 }
 
+#quarto-header .navbar-container {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+#quarto-header .navbar-toggler {
+  display: none;
+}
+
+#quarto-header .navbar-collapse {
+  display: flex;
+  flex-basis: auto;
+  align-items: center;
+  order: 0;
+}
+
+#quarto-header .navbar-nav {
+  flex-direction: row;
+  align-items: center;
+  overflow: visible;
+}
+
+#quarto-header .navbar-nav.ms-auto .nav-item {
+  padding-top: 0;
+}
+
+#quarto-header .navbar-nav.ms-auto .nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 11px;
+  margin: 0;
+  border: 1px solid var(--apogee-border);
+  border-radius: 999px;
+  font-family: var(--reading-font);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--ink-2) !important;
+  background-color: transparent;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+#quarto-header .navbar-nav.ms-auto .nav-link:is(:hover, :focus-visible) {
+  border-color: var(--rule);
+  background-color: var(--paper-2);
+}
+
 #quarto-header .quarto-navbar-tools {
-  margin-left: 12px;
+  display: flex;
+  align-items: center;
+  order: 1;
+  margin-left: 8px;
+}
+
+#quarto-header .quarto-color-scheme-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  border: none;
+  border-radius: 8px;
+  color: var(--ink-2);
+  line-height: 1;
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+}
+
+#quarto-header .quarto-color-scheme-toggle:is(:hover, :focus-visible) {
+  color: var(--ink-2);
+  background-color: var(--paper-2);
+}
+
+#quarto-header .quarto-color-scheme-toggle .bi::before {
+  content: "\f497";
+  background-image: none !important;
+  width: auto !important;
+  height: auto !important;
+  vertical-align: 0;
+}
+
+body.quarto-dark #quarto-header .quarto-color-scheme-toggle .bi::before {
+  content: "\f5a2";
 }
 
 @media (max-width: 991.98px) {
-  #quarto-header .navbar-toggler {
-    display: none;
-  }
-
-  #quarto-header .navbar-collapse {
-    display: flex;
-    flex-basis: auto;
-  }
-
-  #quarto-header .navbar-nav {
-    flex-direction: row;
-    overflow: visible;
-  }
-
   #quarto-header .navbar-nav .dropdown-menu {
     position: absolute;
   }
@@ -200,7 +273,7 @@ body.page-blog .quarto-title-meta {
 }
 
 /* Article typography and contents */
-#quarto-content:has(> main :is(.pe-viz, .post-body)) {
+body:not(.page-home):not(.page-blog) #quarto-content {
   --page-gutter: clamp(18px, 4vw, 48px);
   display: grid;
   grid-template-columns: minmax(0, var(--reading-width));
@@ -209,7 +282,7 @@ body.page-blog .quarto-title-meta {
   padding-inline: var(--page-gutter);
 }
 
-#quarto-content:has(> main :is(.pe-viz, .post-body)) > main.content {
+body:not(.page-home):not(.page-blog) #quarto-content > main.content {
   grid-area: 1 / 1;
   width: 100%;
   min-width: 0;
@@ -221,21 +294,21 @@ body.page-blog .quarto-title-meta {
   overflow-wrap: break-word;
 }
 
-#quarto-content:has(.pe-viz) > #quarto-margin-sidebar {
+body:not(.page-home):not(.page-blog) #quarto-content > #quarto-margin-sidebar {
   display: none;
 }
 
 @media (min-width: 1160px) {
-  #quarto-content:has(> #quarto-margin-sidebar):has(.pe-viz) {
+  body:not(.page-home):not(.page-blog) #quarto-content:has(> #quarto-margin-sidebar) {
     grid-template-columns: minmax(166px, 1fr) minmax(0, var(--reading-width)) minmax(166px, 1fr);
     column-gap: 20px;
   }
 
-  #quarto-content:has(> #quarto-margin-sidebar):has(> main .pe-viz) > main.content {
+  body:not(.page-home):not(.page-blog) #quarto-content:has(> #quarto-margin-sidebar) > main.content {
     grid-column: 2;
   }
 
-  #quarto-content:has(.pe-viz) > #quarto-margin-sidebar {
+  body:not(.page-home):not(.page-blog) #quarto-content > #quarto-margin-sidebar {
     grid-area: 1 / 1;
     display: block;
     align-self: start;
@@ -246,31 +319,31 @@ body.page-blog .quarto-title-meta {
   }
 }
 
-#TOC {
+body:not(.page-home):not(.page-blog) #TOC {
   color: var(--ink-3);
   font-size: 13px;
   line-height: 1.45;
 }
 
-#TOC a.nav-link {
+body:not(.page-home):not(.page-blog) #TOC a.nav-link {
   color: var(--ink-3);
   padding-block: 5px;
   border-color: var(--rule);
 }
 
-#TOC a.nav-link.active {
+body:not(.page-home):not(.page-blog) #TOC a.nav-link.active {
   color: var(--ink) !important;
   border-color: var(--accent) !important;
   font-weight: 600;
 }
 
-main.content:has(:is(.pe-viz, .post-body)) #title-block-header {
+body:not(.page-home):not(.page-blog) main.content #title-block-header {
   margin: 0 0 28px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--rule-2);
 }
 
-main.content:has(:is(.pe-viz, .post-body)) h1.title {
+body:not(.page-home):not(.page-blog) main.content h1.title {
   margin: 0;
   color: var(--ink);
   font-size: clamp(32px, 4.8vw, 52px);
@@ -280,19 +353,18 @@ main.content:has(:is(.pe-viz, .post-body)) h1.title {
   text-wrap: balance;
 }
 
-html:lang(zh) main.content h1.title {
+html:lang(zh) body:not(.page-home):not(.page-blog) main.content h1.title {
   line-height: 1.3;
   letter-spacing: 0;
 }
 
-main.content:has(:is(.pe-viz, .post-body)) .quarto-title-meta {
+body:not(.page-home):not(.page-blog) main.content .quarto-title-meta {
   margin-top: 18px;
   color: var(--ink-3);
   font-size: 14px;
 }
 
-main.content:has(.pe-viz) :is(h2, h3),
-main.content .post-body :is(h2, h3) {
+body:not(.page-home):not(.page-blog) main.content :is(h2, h3):not(:where(.pe-viz *, .e1-figure *, .post-appendix *)) {
   margin: 2em 0 0.65em;
   padding: 0;
   border: 0;
@@ -303,42 +375,22 @@ main.content .post-body :is(h2, h3) {
   letter-spacing: -0.015em;
 }
 
-main.content .post-body .exp-head h3 {
+body:not(.page-home):not(.page-blog) main.content .post-body .exp-head h3 {
   margin: 2px 0 0;
   font-size: 20px;
 }
 
-.navbar-nav.ms-auto .nav-link.apogee-lang-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 28px;
-  padding: 0 11px !important;
-  margin-right: 10px;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
+body:not(.page-home):not(.page-blog) main.content:not(:has(.post-body)) :is(p, li, blockquote):not(#title-block-header *, .pe-viz *) {
+  font-family: var(--reading-serif);
+}
+
+body:not(.page-home):not(.page-blog) main.content .pe-viz {
   font-family: var(--reading-font);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  line-height: 1;
-  color: var(--ink-2) !important;
-  background: transparent;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.navbar-nav.ms-auto .nav-link.apogee-lang-toggle:hover {
-  border-color: var(--ink-3);
-  color: var(--ink) !important;
-  background: var(--surface-muted);
-}
-
-main.content:has(:is(.pe-viz, .post-body)) :is(p, blockquote) {
+body:not(.page-home):not(.page-blog) #title-block-header p,
+body:not(.page-home):not(.page-blog) main.content :is(.post-body, .pe-viz) :is(p, li, blockquote) {
   font-family: inherit;
-}
-
-main.content:not(:has(:is(.pe-viz, .post-body))) :is(li, blockquote) {
-  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
 main.content :not(pre) > code {
@@ -346,7 +398,7 @@ main.content :not(pre) > code {
   color: var(--ink);
 }
 
-main.content:has(.pe-viz) blockquote {
+body:not(.page-home):not(.page-blog) main.content blockquote:not(.pe-viz *, .e1-figure *) {
   margin: 1.4em 0;
   padding: 0 0 0 16px;
   border: 0;
@@ -371,7 +423,7 @@ details > summary,
 }
 
 @media (max-width: 600px) {
-  #quarto-content:has(> main :is(.pe-viz, .post-body)) > main.content {
+  body:not(.page-home):not(.page-blog) #quarto-content > main.content {
     font-size: 16px;
   }
 }
@@ -525,8 +577,7 @@ details > summary,
 }
 
 /* Article figures */
-main.content figure:is(.article-figure, .pe-viz),
-main.content .post-body figure.article-figure {
+body:not(.page-home):not(.page-blog) main.content figure:not(.table-wrap, .e1-figure, .e1-figure *, .pe-viz *) {
   margin: 32px 0;
 }
 
@@ -536,8 +587,8 @@ main.content .article-figure.e1-figure {
   transform: none;
 }
 
-main.content figure .fig-title,
-main.content figure.pe-viz > h4 {
+body:not(.page-home):not(.page-blog) main.content figure .fig-title,
+body:not(.page-home):not(.page-blog) main.content figure.pe-viz > h4 {
   margin: 0 0 14px;
   color: var(--ink);
   font-size: 19px;
@@ -546,8 +597,7 @@ main.content figure.pe-viz > h4 {
   text-wrap: balance;
 }
 
-main.content figure:is(.article-figure, .pe-viz) > figcaption,
-main.content .post-body figure.article-figure > figcaption {
+body:not(.page-home):not(.page-blog) main.content figure:not(.table-wrap, .e1-figure, .e1-figure *, .pe-viz *) > figcaption {
   margin: 10px 0 0;
   color: var(--ink-3);
   font-size: 14px;
@@ -555,7 +605,7 @@ main.content .post-body figure.article-figure > figcaption {
   text-align: left;
 }
 
-main.content figure.article-figure img {
+body:not(.page-home):not(.page-blog) main.content figure:not(.table-wrap, .e1-figure, .e1-figure *, .pe-viz, .pe-viz *) img {
   display: block;
   height: auto;
   max-width: 100%;
@@ -664,7 +714,6 @@ footer.footer {
   gap: 0.5rem;
 }
 
-#quarto-header .quarto-color-scheme-toggle,
 .site-footer-tools .aa-DetachedSearchButton {
   display: inline-grid;
   place-items: center;
@@ -674,14 +723,6 @@ footer.footer {
   border: none;
   background: transparent;
   color: var(--apogee-footer-text);
-}
-
-#quarto-header .quarto-color-scheme-toggle .bi::before {
-  content: "\f497";
-}
-
-.quarto-dark #quarto-header .quarto-color-scheme-toggle .bi::before {
-  content: "\f5a2";
 }
 
 img {
